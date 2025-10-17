@@ -76,10 +76,10 @@ export async function POST(request: NextRequest) {
         customerName,
         mobile: normalizedMobile,
         email: email || '',
-        companyName,
-        industryName,
-        followUpDate: followUpDate ? new Date(followUpDate) : null,
-        shortDescription,
+        companyName: companyName || '',
+        industryName: industryName || '',
+        followUpDate: followUpDate && followUpDate.trim() ? new Date(followUpDate) : null,
+        shortDescription: shortDescription || '',
         createdById: session.user.id
       },
       include: {

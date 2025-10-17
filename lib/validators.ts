@@ -18,11 +18,11 @@ export const leadSchema = z.object({
     /^(\+91)?[6-9]\d{9}$/,
     'Please enter a valid 10-digit Indian mobile number'
   ),
-  email: z.string().email('Invalid email address').optional(),
-  companyName: z.string().min(2, 'Company name must be at least 2 characters').optional(),
-  industryName: z.string().min(2, 'Industry name must be at least 2 characters').optional(),
-  followUpDate: z.string().optional(),
-  shortDescription: z.string().min(10, 'Short description must be at least 10 characters').optional(),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  companyName: z.string().optional().or(z.literal('')),
+  industryName: z.string().optional().or(z.literal('')),
+  followUpDate: z.string().optional().or(z.literal('')),
+  shortDescription: z.string().optional().or(z.literal('')),
 })
 
 export type RegisterInput = z.infer<typeof registerSchema>
