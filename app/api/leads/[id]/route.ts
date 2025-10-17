@@ -97,8 +97,69 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    return NextResponse.json({ 
-      error: 'Failed to update lead' 
+    return NextResponse.json({
+      error: 'Failed to update lead'
+    }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const leadId = params.id
+
+    // Check if the lead exists
+    const existingLead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      include: { createdBy: true }
+    })
+
+    if (!existingLead) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
+    }
+
+    // Check if user has permission to delete this lead
+    // SuperAdmin can delete all leads, Users and Admins can only delete their own leads
+    const userRole = session.user.role
+    const isOwner = existingLead.createdById === session.user.id
+
+    if (userRole === 'SUPERADMIN') {
+      // SuperAdmin can delete all leads - no additional check needed
+    } else if (userRole === 'USER' || userRole === 'ADMIN') {
+      // Users and Admins can only delete their own leads
+      if (!isOwner) {
+        return NextResponse.json({
+          error: 'You do not have permission to delete this lead'
+        }, { status: 403 })
+      }
+    } else {
+      return NextResponse.json({
+        error: 'Invalid user role'
+      }, { status: 403 })
+    }
+
+    // Delete the lead
+    await prisma.lead.delete({
+      where: { id: leadId }
+    })
+
+    return NextResponse.json({
+      message: 'Lead deleted successfully'
+    })
+
+  } catch (error) {
+    console.error('Lead delete error:', error)
+
+    return NextResponse.json({
+      error: 'Failed to delete lead'
     }, { status: 500 })
   }
 }

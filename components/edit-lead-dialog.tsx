@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
-import { Edit } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
 
 const editLeadSchema = z.object({
   customerName: z.string().min(2, 'Customer name must be at least 2 characters'),
@@ -51,6 +51,8 @@ interface EditLeadDialogProps {
 export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: EditLeadDialogProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const {
     register,
@@ -121,7 +123,40 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
 
   const handleClose = () => {
     reset()
+    setShowDeleteConfirm(false)
     onOpenChange(false)
+  }
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/leads/${lead.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete lead')
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Lead deleted successfully!',
+      })
+
+      handleClose()
+      onLeadUpdated()
+    } catch (error) {
+      console.error('Lead delete error:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete lead',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
   return (
@@ -232,20 +267,63 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
             )}
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleClose}
-              disabled={isLoading}
+          <div className="flex justify-between items-center pt-4">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isLoading || isDeleting}
+              className="flex items-center gap-2"
             >
-              Cancel
+              <Trash2 className="h-4 w-4" />
+              Delete Lead
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Updating...' : 'Update Lead'}
-            </Button>
+
+            <div className="flex space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isLoading || isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading || isDeleting}>
+                {isLoading ? 'Updating...' : 'Update Lead'}
+              </Button>
+            </div>
           </div>
         </form>
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-2">Delete Lead</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this lead? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
