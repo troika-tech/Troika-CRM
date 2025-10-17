@@ -175,7 +175,7 @@ export default function SuperAdminAdminsPage() {
           onAddAdmin={() => setShowAddAdmin(true)}
         />
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col ml-64">
           <Header />
           <main className="flex-1 p-6 bg-gray-50">
             <div className="mb-8">

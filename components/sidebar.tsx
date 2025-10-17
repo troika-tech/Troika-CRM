@@ -27,7 +27,7 @@ export function Sidebar({ onAddLead, onAddUser }: SidebarProps) {
   const isAdmin = session.user.role === 'ADMIN'
 
   return (
-    <div className="w-64 bg-gray-50 border-r border-gray-200 h-screen flex flex-col">
+    <div className="w-64 bg-gray-50 border-r border-gray-200 h-screen flex flex-col fixed top-0 left-0 z-10">
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-900">CRM</h1>
         <p className="text-sm text-gray-600">

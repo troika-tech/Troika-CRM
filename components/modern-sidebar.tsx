@@ -32,7 +32,7 @@ export function ModernSidebar({ onAddLead, onAddUser, onAddAdmin }: ModernSideba
   const isSuperAdmin = session.user.role === 'SUPERADMIN'
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col shadow-lg">
+    <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col shadow-lg fixed top-0 left-0 z-10">
       {/* Logo */}
       <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center space-x-3">

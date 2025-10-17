@@ -154,7 +154,7 @@ export default function SuperAdminAnalyticsPage() {
           onAddAdmin={() => setShowAddAdmin(true)}
         />
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col ml-64">
           <Header />
           <div className="flex-1 p-6">
             <div className="max-w-7xl mx-auto">

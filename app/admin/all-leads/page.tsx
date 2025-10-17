@@ -43,7 +43,7 @@ export default function AllLeadsPage() {
       <div className="flex">
         <ModernSidebar />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col ml-64">
           <Header />
           
           <div className="flex-1 p-6">

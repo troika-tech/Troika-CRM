@@ -87,7 +87,7 @@ export function SuperAdminSidebar({ onAddLead, onAddUser, onAddAdmin }: SuperAdm
   ]
 
   return (
-    <div className="flex h-screen w-64 flex-col bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <div className="flex h-screen w-64 flex-col bg-gradient-to-b from-slate-900 to-slate-800 text-white fixed top-0 left-0 z-10">
       {/* Logo */}
       <div className="flex items-center justify-center px-6 py-4 border-b border-slate-700">
         <div className="flex items-center space-x-3">

@@ -65,7 +65,7 @@ export default function DashboardPage() {
       <div className="flex">
         <ModernSidebar onAddLead={() => setShowAddLead(true)} />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col ml-64">
           <Header />
           
           <div className="flex-1 p-6">
