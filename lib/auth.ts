@@ -34,6 +34,12 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
+          // Check if user account is active
+          if (user.status !== 'ACTIVE') {
+            console.log('Login attempt by inactive user:', email)
+            return null
+          }
+
           const isPasswordValid = await bcrypt.compare(password, user.password)
 
           if (!isPasswordValid) {
@@ -45,6 +51,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            status: user.status,
           }
         } catch (error) {
           console.error('Auth error:', error)
@@ -60,6 +67,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role
+        token.status = (user as any).status
       }
       return token
     },
@@ -67,6 +75,17 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.sub!
         session.user.role = token.role as string
+
+        // Re-validate user status on each session check
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub! },
+          select: { status: true }
+        })
+
+        // If user is inactive, invalidate the session
+        if (!user || user.status !== 'ACTIVE') {
+          throw new Error('User account is inactive')
+        }
       }
       return session
     },
