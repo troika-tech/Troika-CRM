@@ -290,9 +290,6 @@ export default function AssignCallingDataPage() {
       setPreviewData([])
       const fileInput = document.getElementById('file-upload') as HTMLInputElement
       if (fileInput) fileInput.value = ''
-
-      // Refresh assignment history
-      fetchAssignmentHistory()
     } catch (error) {
       toast({
         title: 'Error',
