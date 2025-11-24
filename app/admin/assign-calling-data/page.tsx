@@ -344,18 +344,26 @@ export default function AssignCallingDataPage() {
                     {/* Upload Method Selection */}
                     <div className="flex space-x-2">
                       <Button
-                        type="button"
                         variant={uploadMethod === 'paste' ? 'default' : 'outline'}
-                        onClick={() => setUploadMethod('paste')}
+                        onClick={() => {
+                          setUploadMethod('paste')
+                          setPasteData('')
+                          setSelectedFile(null)
+                          setPreviewData([])
+                        }}
                         className="flex-1"
                       >
                         <Clipboard className="mr-2 h-4 w-4" />
-                        Copy & Paste
+                        Paste CSV
                       </Button>
                       <Button
-                        type="button"
                         variant={uploadMethod === 'file' ? 'default' : 'outline'}
-                        onClick={() => setUploadMethod('file')}
+                        onClick={() => {
+                          setUploadMethod('file')
+                          setPasteData('')
+                          setSelectedFile(null)
+                          setPreviewData([])
+                        }}
                         className="flex-1"
                       >
                         <Upload className="mr-2 h-4 w-4" />
@@ -363,220 +371,177 @@ export default function AssignCallingDataPage() {
                       </Button>
                     </div>
 
-                    {/* Paste Method */}
-                    {uploadMethod === 'paste' && (
+                    {uploadMethod === 'paste' ? (
                       <div className="space-y-2">
-                        <Label>Paste CSV Data</Label>
+                        <Label htmlFor="paste-data">Paste CSV Data</Label>
                         <Textarea
+                          id="paste-data"
+                          placeholder="Name, Number, Company Name, Designation, Status&#10;John Doe, 1234567890, ABC Corp, Manager, Interested"
                           value={pasteData}
                           onChange={(e) => handlePasteChange(e.target.value)}
-                          placeholder="Name, Number, Company Name, Designation, Status&#10;John Doe, 9876543210, ABC Corp, Manager, Active&#10;Jane Smith, 9876543211, XYZ Ltd, Director, Active"
                           rows={8}
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-gray-500">
-                          Format: Name, Number, Company Name, Designation, Status (one per line)
-                        </p>
                       </div>
-                    )}
-
-                    {/* File Upload Method */}
-                    {uploadMethod === 'file' && (
+                    ) : (
                       <div className="space-y-2">
-                        <Label>Upload Excel or CSV File</Label>
+                        <Label htmlFor="file-upload">Upload CSV or Excel File</Label>
                         <Input
                           id="file-upload"
                           type="file"
                           accept=".csv,.xlsx,.xls"
                           onChange={handleFileChange}
-                          className="cursor-pointer"
                         />
-                        <p className="text-xs text-gray-500">
-                          Supported formats: CSV, Excel (.xlsx, .xls)
-                          <br />
-                          Required columns: Name, Number, Company Name, Designation, Status
-                        </p>
+                        {selectedFile && (
+                          <p className="text-sm text-gray-600">
+                            Selected: {selectedFile.name}
+                          </p>
+                        )}
                       </div>
                     )}
 
-                    {/* User Selection */}
+                    {previewData.length > 0 && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Preview: {previewData.length} records found
+                        </p>
+                        <div className="max-h-40 overflow-y-auto">
+                          <table className="min-w-full text-xs">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left p-1">Name</th>
+                                <th className="text-left p-1">Number</th>
+                                <th className="text-left p-1">Company</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {previewData.slice(0, 5).map((row, idx) => (
+                                <tr key={idx} className="border-b">
+                                  <td className="p-1">{row.name}</td>
+                                  <td className="p-1">{row.number}</td>
+                                  <td className="p-1">{row.companyName}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
-                      <Label htmlFor="user-select">Assign To User <span className="text-red-500">*</span></Label>
-                      <Select
-                        value={selectedUserId}
-                        onValueChange={setSelectedUserId}
-                      >
-                        <SelectTrigger id="user-select" className="h-11">
-                          <SelectValue placeholder="Select user to assign data" />
+                      <Label htmlFor="user-select">Assign To User</Label>
+                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                        <SelectTrigger id="user-select">
+                          <SelectValue placeholder="Select a user" />
                         </SelectTrigger>
                         <SelectContent>
                           {availableUsers.map((user) => (
                             <SelectItem key={user.id} value={user.id}>
-                              {user.name || 'No name'} ({user.email})
+                              {user.name || user.email}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
 
-                    {/* Submit Button */}
                     <Button
                       onClick={handleSubmit}
                       disabled={isSubmitting || previewData.length === 0 || !selectedUserId}
                       className="w-full"
                     >
-                      {isSubmitting ? 'Uploading...' : `Assign ${previewData.length} Records`}
+                      {isSubmitting ? 'Assigning...' : `Assign ${previewData.length} Records`}
                     </Button>
                   </CardContent>
                 </Card>
 
-                {/* Preview Section */}
+                {/* Assignment History Section */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Data Preview</CardTitle>
+                    <CardTitle>Assignment History</CardTitle>
                     <CardDescription>
-                      {previewData.length > 0 
-                        ? `Preview of ${previewData.length} records` 
-                        : 'No data to preview'}
+                      View your calling data assignments and their status
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {previewData.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left p-2">Name</th>
-                              <th className="text-left p-2">Number</th>
-                              <th className="text-left p-2">Company</th>
-                              <th className="text-left p-2">Designation</th>
-                              <th className="text-left p-2">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {previewData.slice(0, 10).map((row, index) => (
-                              <tr key={index} className="border-b">
-                                <td className="p-2">{row.name}</td>
-                                <td className="p-2">{row.number}</td>
-                                <td className="p-2">{row.companyName || '-'}</td>
-                                <td className="p-2">{row.designation || '-'}</td>
-                                <td className="p-2">{row.status || '-'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        {previewData.length > 10 && (
-                          <p className="text-xs text-gray-500 mt-2">
-                            Showing first 10 of {previewData.length} records
-                          </p>
-                        )}
+                    {loadingHistory ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                      </div>
+                    ) : assignmentHistory.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <History className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <p>No assignments yet</p>
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-gray-400">
-                        <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>Upload data to see preview</p>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          {assignmentHistory.map((assignment: any) => (
+                            <div
+                              key={assignment.id}
+                              className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-900">
+                                    {assignment.assignedTo.name || assignment.assignedTo.email}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {assignment.records.length} records • {new Date(assignment.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleViewAssignment(assignment)}
+                                  >
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    View
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleExportAssignment(assignment)}
+                                  >
+                                    <Download className="h-4 w-4 mr-1" />
+                                    Export
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {historyPagination.totalPages > 1 && (
+                          <div className="flex items-center justify-between pt-4 border-t">
+                            <p className="text-sm text-gray-600">
+                              Page {historyPagination.page} of {historyPagination.totalPages}
+                            </p>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                                disabled={historyPage === 1}
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setHistoryPage(p => Math.min(historyPagination.totalPages, p + 1))}
+                                disabled={historyPage === historyPagination.totalPages}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
                 </Card>
-
-              {/* Assignment History Section */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <History className="mr-2 h-5 w-5" />
-                    Assignment History
-                  </CardTitle>
-                  <CardDescription>
-                    View your calling data assignments and their status
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loadingHistory ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                      <p className="mt-2 text-gray-600">Loading history...</p>
-                    </div>
-                  ) : assignmentHistory.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">
-                      <History className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No assignment history yet</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="text-left p-3 font-semibold text-gray-700">Assigned To</th>
-                              <th className="text-left p-3 font-semibold text-gray-700">Records</th>
-                              <th className="text-left p-3 font-semibold text-gray-700">Date</th>
-                              <th className="text-left p-3 font-semibold text-gray-700">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {assignmentHistory.map((assignment) => (
-                              <tr key={assignment.id} className="border-b hover:bg-gray-50">
-                                <td className="p-3">
-                                  {assignment.assignedTo.name || assignment.assignedTo.email}
-                                </td>
-                                <td className="p-3">{assignment.recordCount}</td>
-                                <td className="p-3 text-gray-600">
-                                  {new Date(assignment.createdAt).toLocaleDateString()}
-                                </td>
-                                <td className="p-3">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleViewAssignment(assignment)}
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View
-                                  </Button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {/* Pagination */}
-                      {historyPagination.totalPages > 1 && (
-                        <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                          <p className="text-sm text-gray-600">
-                            Showing {(historyPage - 1) * historyPagination.pageSize + 1} to{' '}
-                            {Math.min(historyPage * historyPagination.pageSize, historyPagination.total)} of{' '}
-                            {historyPagination.total} results
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setHistoryPage(historyPage - 1)}
-                              disabled={historyPage === 1}
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                              Previous
-                            </Button>
-                            <span className="text-sm text-gray-600">
-                              Page {historyPage} of {historyPagination.totalPages}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setHistoryPage(historyPage + 1)}
-                              disabled={historyPage >= historyPagination.totalPages}
-                            >
-                              Next
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+              </div>
             </div>
           </div>
         </div>
@@ -586,82 +551,61 @@ export default function AssignCallingDataPage() {
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle>Assignment Details</DialogTitle>
-                <DialogDescription>
-                  Status of all records assigned on {viewingAssignment && new Date(viewingAssignment.createdAt).toLocaleDateString()}
-                </DialogDescription>
-              </div>
-              {viewingAssignment && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleExportAssignment(viewingAssignment)}
-                  className="ml-4"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              )}
-            </div>
+            <DialogTitle>Assignment Details</DialogTitle>
+            <DialogDescription>
+              View all records assigned to {viewingAssignment?.assignedTo?.name || viewingAssignment?.assignedTo?.email}
+            </DialogDescription>
           </DialogHeader>
           {viewingAssignment && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-semibold">Assigned To:</span>{' '}
-                  {viewingAssignment.assignedTo.name || viewingAssignment.assignedTo.email}
-                </div>
-                <div>
-                  <span className="font-semibold">Total Records:</span> {viewingAssignment.recordCount}
-                </div>
-                <div>
-                  <span className="font-semibold">Date:</span>{' '}
-                  {new Date(viewingAssignment.createdAt).toLocaleString()}
-                </div>
+            <div className="mt-4">
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  <strong>Assigned To:</strong> {viewingAssignment.assignedTo.name || viewingAssignment.assignedTo.email}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Date:</strong> {new Date(viewingAssignment.createdAt).toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Total Records:</strong> {viewingAssignment.records.length}
+                </p>
               </div>
-
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Records Status</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2 font-semibold">Name</th>
-                        <th className="text-left p-2 font-semibold">Number</th>
-                        <th className="text-left p-2 font-semibold">Company</th>
-                        <th className="text-left p-2 font-semibold">Designation</th>
-                        <th className="text-left p-2 font-semibold">Status</th>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {viewingAssignment.records.map((record: any, idx: number) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{record.name || '-'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{record.number || '-'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{record.companyName || '-'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{record.designation || '-'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            record.status === 'Interested' || record.status === 'Converted'
+                              ? 'bg-green-100 text-green-800'
+                              : record.status === 'Not Interested' || record.status === 'Rejected' || record.status === 'Do Not Call'
+                              ? 'bg-red-100 text-red-800'
+                              : record.status === 'Follow Up' || record.status === 'Call Back'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : record.status
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {record.status || 'No Status'}
+                          </span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {viewingAssignment.records.map((record: any) => (
-                        <tr key={record.id} className="border-b">
-                          <td className="p-2">{record.name}</td>
-                          <td className="p-2">{record.number}</td>
-                          <td className="p-2">{record.companyName || '-'}</td>
-                          <td className="p-2">{record.designation || '-'}</td>
-                          <td className="p-2">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              record.status === 'Interested' || record.status === 'Converted'
-                                ? 'bg-green-100 text-green-800'
-                                : record.status === 'Not Interested' || record.status === 'Rejected' || record.status === 'Do Not Call'
-                                ? 'bg-red-100 text-red-800'
-                                : record.status === 'Follow Up' || record.status === 'Call Back'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : record.status
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {record.status || 'No Status'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -670,4 +614,3 @@ export default function AssignCallingDataPage() {
     </div>
   )
 }
-
