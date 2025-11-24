@@ -149,6 +149,9 @@ export async function PUT(request: NextRequest) {
     if (password) {
       updateData.password = await bcrypt.hash(password, 12)
     }
+    if (body.assignedUserIds !== undefined) {
+      updateData.assignedUserIds = body.assignedUserIds || []
+    }
 
     // Update user
     const updatedUser = await prisma.user.update({
@@ -229,6 +232,7 @@ export async function GET(request: NextRequest) {
           email: true,
           role: true,
           status: true,
+          assignedUserIds: true,
           createdAt: true,
           _count: {
             select: {

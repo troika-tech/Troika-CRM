@@ -14,7 +14,8 @@ import {
   Eye,
   Settings,
   LogOut,
-  UserCog
+  UserCog,
+  PhoneCall
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -70,6 +71,12 @@ export function SuperAdminSidebar({ onAddLead, onAddUser, onAddAdmin }: SuperAdm
       href: '#',
       icon: Plus,
       onClick: onAddLead
+    },
+    {
+      name: 'Assign Data For Calling',
+      href: '/superadmin/assign-calling-data',
+      icon: PhoneCall,
+      current: pathname === '/superadmin/assign-calling-data'
     },
     {
       name: 'Analytics',

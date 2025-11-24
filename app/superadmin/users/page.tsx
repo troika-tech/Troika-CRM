@@ -62,25 +62,40 @@ export default function SuperAdminUsersPage() {
     try {
       setLoading(true)
       const response = await fetch(`/api/users?page=${currentPage}&pageSize=${usersPerPage}&search=${search}&role=USER`)
-      if (response.ok) {
-        const data = await response.json()
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('API Error:', errorData)
+        throw new Error(errorData.error || `HTTP ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('Users API Response:', data)
+      
+      if (data.users && Array.isArray(data.users)) {
         // Map the API response to match the expected interface
         const mappedUsers = data.users.map((user: any) => ({
           ...user,
           leadsCount: user._count?.leads || 0,
           status: user.status || 'ACTIVE', // Ensure status is included
+          assignedUserIds: user.assignedUserIds || [],
           _count: user._count || { leads: 0 } // Ensure _count is always present
         }))
         setUsers(mappedUsers)
-        setTotalPages(data.pagination.totalPages)
+        setTotalPages(data.pagination?.totalPages || 1)
+      } else {
+        console.warn('Unexpected API response format:', data)
+        setUsers([])
+        setTotalPages(1)
       }
     } catch (error) {
       console.error('Error fetching users:', error)
       toast({
         title: 'Error',
-        description: 'Failed to fetch users',
+        description: error instanceof Error ? error.message : 'Failed to fetch users',
         variant: 'destructive',
       })
+      setUsers([])
     } finally {
       setLoading(false)
     }

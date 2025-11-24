@@ -17,6 +17,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface LeadFormDialogProps {
   open: boolean
@@ -33,6 +40,7 @@ export function LeadFormDialog({ open, onOpenChange, onLeadAdded }: LeadFormDial
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<LeadInput>({
     resolver: zodResolver(leadSchema),
   })
@@ -150,6 +158,25 @@ export function LeadFormDialog({ open, onOpenChange, onLeadAdded }: LeadFormDial
             />
             {errors.industryName && (
               <p className="text-sm text-red-600">{errors.industryName.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="leadStatus">Lead Status <span className="text-red-500">*</span></Label>
+            <Select
+              onValueChange={(value) => setValue('leadStatus', value as 'Lead' | 'Prospect' | 'Other', { shouldValidate: true })}
+            >
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Select Lead Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Lead">Lead</SelectItem>
+                <SelectItem value="Prospect">Prospect</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.leadStatus && (
+              <p className="text-sm text-red-600">{errors.leadStatus.message}</p>
             )}
           </div>
 

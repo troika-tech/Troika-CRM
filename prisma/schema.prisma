@@ -11,15 +11,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String?
-  email     String   @unique
-  password  String
-  role      String   @default("USER")
-  status    String   @default("ACTIVE")
-  leads     Lead[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String   @unique
+  password      String
+  role          String   @default("USER")
+  status        String   @default("ACTIVE")
+  leads         Lead[]
+  assignedUserIds String[] @default([])
+  callingData   CallingData[] @relation("DataAssignee")
+  assignedCallingData CallingData[] @relation("DataAssigner")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([role])
   @@index([status])
@@ -34,6 +37,7 @@ model Lead {
   industryName     String?
   followUpDate     DateTime?
   shortDescription String?
+  leadStatus       String?   @default("Lead")
   createdById      String    @db.ObjectId
   createdBy        User      @relation(fields: [createdById], references: [id])
   createdAt        DateTime  @default(now())
@@ -44,4 +48,24 @@ model Lead {
   @@index([createdAt])
   @@index([followUpDate])
   @@index([customerName])
+  @@index([leadStatus])
+}
+
+model CallingData {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  number       String
+  companyName  String?
+  designation  String?
+  status       String?
+  assignedToId String   @db.ObjectId
+  assignedTo   User     @relation("DataAssignee", fields: [assignedToId], references: [id])
+  assignedById String   @db.ObjectId
+  assignedBy   User     @relation("DataAssigner", fields: [assignedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([assignedToId])
+  @@index([assignedById])
+  @@index([createdAt])
 }

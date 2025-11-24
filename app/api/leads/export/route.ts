@@ -21,9 +21,11 @@ export async function GET(request: NextRequest) {
     const owner = searchParams.get('owner') || ''
     const dateFrom = searchParams.get('dateFrom') || ''
     const dateTo = searchParams.get('dateTo') || ''
+    const leadStatus = searchParams.get('leadStatus') || ''
 
     // Check if user is admin or superadmin for viewing all leads
     const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN'
+    const isSuperAdmin = session.user.role === 'SUPERADMIN'
     const shouldShowAll = all && isAdmin
 
     // Build where clause
@@ -31,6 +33,20 @@ export async function GET(request: NextRequest) {
     
     if (!shouldShowAll) {
       where.createdById = session.user.id
+    } else if (isAdmin && !isSuperAdmin) {
+      // For regular admins, check if they have assigned users
+      const adminUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { assignedUserIds: true }
+      })
+      
+      if (adminUser?.assignedUserIds && adminUser.assignedUserIds.length > 0) {
+        // Admin has assigned users - only show leads from those users
+        where.createdById = { in: adminUser.assignedUserIds }
+      } else {
+        // Admin has no assigned users - show no leads
+        where.createdById = { in: [] }
+      }
     }
 
     if (search) {
@@ -60,6 +76,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (leadStatus) {
+      where.leadStatus = leadStatus
+    }
+
     // Build orderBy clause
     const [sortField, sortOrder] = sort.split(':')
     const orderBy: any = {}
@@ -80,8 +100,8 @@ export async function GET(request: NextRequest) {
 
     // Convert to CSV format
     const csvHeaders = isAdmin 
-      ? ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Short Description', 'Follow-up Date', 'Owner', 'Created At']
-      : ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Short Description', 'Follow-up Date', 'Created At']
+      ? ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Lead Status', 'Short Description', 'Follow-up Date', 'Owner', 'Created At']
+      : ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Lead Status', 'Short Description', 'Follow-up Date', 'Created At']
 
     const csvRows = leads.map(lead => {
       const baseRow = [
@@ -90,6 +110,7 @@ export async function GET(request: NextRequest) {
         lead.email,
         lead.companyName || '',
         lead.industryName || '',
+        lead.leadStatus || 'Lead',
         lead.shortDescription || '',
         lead.followUpDate ? new Date(lead.followUpDate).toLocaleDateString('en-US') : '',
         new Date(lead.createdAt).toLocaleString('en-US', {
@@ -102,7 +123,7 @@ export async function GET(request: NextRequest) {
       ]
 
       if (isAdmin) {
-        baseRow.splice(7, 0, lead.createdBy?.name || lead.createdBy?.email || 'Unknown')
+        baseRow.splice(8, 0, lead.createdBy?.name || lead.createdBy?.email || 'Unknown')
       }
 
       return baseRow.map(field => `"${field}"`).join(',')

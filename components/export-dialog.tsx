@@ -15,6 +15,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Download, Filter } from 'lucide-react'
 
 interface ExportDialogProps {
@@ -29,6 +36,7 @@ interface ExportFilters {
   dateFrom: string
   dateTo: string
   sort: string
+  leadStatus: string
 }
 
 export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDialogProps) {
@@ -40,13 +48,16 @@ export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDial
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm<ExportFilters>({
     defaultValues: {
       search: '',
       owner: '',
       dateFrom: '',
       dateTo: '',
-      sort: 'createdAt:desc'
+      sort: 'createdAt:desc',
+      leadStatus: ''
     }
   })
 
@@ -59,6 +70,10 @@ export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDial
         dateFrom: data.dateFrom,
         dateTo: data.dateTo,
       })
+
+      if (data.leadStatus && data.leadStatus !== 'all') {
+        params.append('leadStatus', data.leadStatus)
+      }
 
       if (isAdmin) {
         params.append('all', 'true')
@@ -241,6 +256,24 @@ export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDial
                       type="date"
                       {...register('dateTo')}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="leadStatus">Lead Status <span className="text-gray-500">(Optional)</span></Label>
+                    <Select
+                      value={watch('leadStatus') || undefined}
+                      onValueChange={(value) => setValue('leadStatus', value === 'all' ? '' : value)}
+                    >
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="Lead">Lead</SelectItem>
+                        <SelectItem value="Prospect">Prospect</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

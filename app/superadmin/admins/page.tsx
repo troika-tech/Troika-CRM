@@ -22,6 +22,7 @@ interface Admin {
   role: string
   status: string
   leadsCount: number
+  assignedUserIds?: string[]
   createdAt: string
   _count: {
     leads: number
@@ -62,25 +63,40 @@ export default function SuperAdminAdminsPage() {
     try {
       setLoading(true)
       const response = await fetch(`/api/users?page=${currentPage}&pageSize=${adminsPerPage}&search=${search}&role=ADMIN`)
-      if (response.ok) {
-        const data = await response.json()
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('API Error:', errorData)
+        throw new Error(errorData.error || `HTTP ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('Admins API Response:', data)
+      
+      if (data.users && Array.isArray(data.users)) {
         // Map the API response to match the expected interface
         const mappedAdmins = data.users.map((admin: any) => ({
           ...admin,
           leadsCount: admin._count?.leads || 0,
           status: admin.status || 'ACTIVE', // Ensure status is included
+          assignedUserIds: admin.assignedUserIds || [],
           _count: admin._count || { leads: 0 } // Ensure _count is always present
         }))
         setAdmins(mappedAdmins)
-        setTotalPages(data.pagination.totalPages)
+        setTotalPages(data.pagination?.totalPages || 1)
+      } else {
+        console.warn('Unexpected API response format:', data)
+        setAdmins([])
+        setTotalPages(1)
       }
     } catch (error) {
       console.error('Error fetching admins:', error)
       toast({
         title: 'Error',
-        description: 'Failed to fetch admins',
+        description: error instanceof Error ? error.message : 'Failed to fetch admins',
         variant: 'destructive',
       })
+      setAdmins([])
     } finally {
       setLoading(false)
     }

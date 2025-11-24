@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { customerName, mobile, email, companyName, industryName, followUpDate, shortDescription } = validatedFields.data
+    const { customerName, mobile, email, companyName, industryName, followUpDate, shortDescription, leadStatus } = validatedFields.data
 
     // Normalize phone number
     const normalizedMobile = normalizePhoneNumber(mobile)
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         industryName: industryName || '',
         followUpDate: followUpDate && followUpDate.trim() ? new Date(followUpDate) : null,
         shortDescription: shortDescription || '',
+        leadStatus: leadStatus,
         createdById: session.user.id
       },
       include: {
@@ -126,9 +127,12 @@ export async function GET(request: NextRequest) {
     const owner = searchParams.get('owner') || ''
     const dateFrom = searchParams.get('dateFrom') || ''
     const dateTo = searchParams.get('dateTo') || ''
+    const leadStatus = searchParams.get('leadStatus') || ''
+    const checkMobiles = searchParams.get('checkMobiles') === 'true'
 
     // Check if user is admin or superadmin for viewing all leads
     const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN'
+    const isSuperAdmin = session.user.role === 'SUPERADMIN'
     const shouldShowAll = all && isAdmin
 
     const skip = (page - 1) * pageSize
@@ -136,20 +140,50 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {}
     
-    // If userOnly is true or user is not admin, only show their own leads
-    if (userOnly || !shouldShowAll) {
+    // If userOnly is true, only show their own leads
+    if (userOnly) {
+      where.createdById = session.user.id
+    } else if (shouldShowAll) {
+      // Admin/SuperAdmin viewing all leads
+      if (isSuperAdmin) {
+        // SuperAdmin sees all leads - no filter needed
+      } else if (isAdmin) {
+        // Regular admin - check assigned users
+        const adminUser = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { assignedUserIds: true }
+        })
+        
+        if (adminUser?.assignedUserIds && adminUser.assignedUserIds.length > 0) {
+          // Admin has assigned users - only show leads from those users
+          where.createdById = { in: adminUser.assignedUserIds }
+        } else {
+          // Admin has no assigned users - show no leads
+          where.createdById = { in: [] }
+        }
+      }
+    } else {
+      // Regular user or admin not requesting all leads - show only their own
       where.createdById = session.user.id
     }
 
     if (search) {
-      where.OR = [
-        { customerName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { mobile: { contains: search } },
-        { companyName: { contains: search, mode: 'insensitive' } },
-        { industryName: { contains: search, mode: 'insensitive' } },
-        { shortDescription: { contains: search, mode: 'insensitive' } }
-      ]
+      if (checkMobiles) {
+        // If checking mobiles, search is comma-separated mobile numbers
+        const mobileNumbers = search.split(',').map(m => m.trim()).filter(m => m)
+        if (mobileNumbers.length > 0) {
+          where.mobile = { in: mobileNumbers }
+        }
+      } else {
+        where.OR = [
+          { customerName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { mobile: { contains: search } },
+          { companyName: { contains: search, mode: 'insensitive' } },
+          { industryName: { contains: search, mode: 'insensitive' } },
+          { shortDescription: { contains: search, mode: 'insensitive' } }
+        ]
+      }
     }
 
     if (owner) {
@@ -166,6 +200,10 @@ export async function GET(request: NextRequest) {
       if (dateTo) {
         where.createdAt.lte = new Date(dateTo)
       }
+    }
+
+    if (leadStatus) {
+      where.leadStatus = leadStatus
     }
 
     // Build orderBy clause

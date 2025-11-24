@@ -17,12 +17,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userOnly = searchParams.get('userOnly') === 'true'
 
-    let whereClause = {}
+    const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN'
+    const isSuperAdmin = session.user.role === 'SUPERADMIN'
+
+    let whereClause: any = {}
     
     // If userOnly is true, only show data for the current user
     if (userOnly && session.user.role === 'USER') {
       whereClause = {
         createdById: session.user.id
+      }
+    } else if (isAdmin && !isSuperAdmin && !userOnly) {
+      // For regular admins, filter by assigned users
+      const adminUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { assignedUserIds: true }
+      })
+      
+      if (adminUser?.assignedUserIds && adminUser.assignedUserIds.length > 0) {
+        whereClause.createdById = { in: adminUser.assignedUserIds }
+      } else {
+        // No assigned users - show no data
+        whereClause.createdById = { in: [] }
       }
     }
 

@@ -14,7 +14,8 @@ import {
   Settings,
   ChevronDown,
   Plus,
-  List
+  List,
+  PhoneCall
 } from 'lucide-react'
 
 interface ModernSidebarProps {
@@ -133,14 +134,15 @@ export function ModernSidebar({ onAddLead, onAddUser, onAddAdmin }: ModernSideba
             Lead Management
           </p>
           <div className="space-y-1">
-            <Button 
-              onClick={onAddLead}
-              className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all duration-200"
-              variant="ghost"
-            >
-              <Plus className="mr-3 h-4 w-4" />
-              Add Lead
-            </Button>
+            <Link href={isSuperAdmin ? "/superadmin/all-leads/add" : isAdmin ? "/admin/all-leads/add" : "/dashboard/leads/add"}>
+              <Button 
+                className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all duration-200"
+                variant="ghost"
+              >
+                <Plus className="mr-3 h-4 w-4" />
+                Add Lead
+              </Button>
+            </Link>
 
             <Link href={isSuperAdmin ? "/superadmin/all-leads" : isAdmin ? "/admin/all-leads" : "/dashboard/leads"}>
               <Button 
@@ -153,6 +155,26 @@ export function ModernSidebar({ onAddLead, onAddUser, onAddAdmin }: ModernSideba
             </Link>
           </div>
         </div>
+
+        {/* Calling Data Section - Only for Admin/SuperAdmin */}
+        {(isAdmin || isSuperAdmin) && (
+          <div className="pt-6">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Data Management
+            </p>
+            <div className="space-y-1">
+              <Link href={isSuperAdmin ? "/superadmin/assign-calling-data" : "/admin/assign-calling-data"}>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all duration-200"
+                >
+                  <PhoneCall className="mr-3 h-4 w-4" />
+                  Assign Data For Calling
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Analytics Section */}
         <div className="pt-6">
@@ -171,6 +193,26 @@ export function ModernSidebar({ onAddLead, onAddUser, onAddAdmin }: ModernSideba
             </Link>
           </div>
         </div>
+
+        {/* Calling Data Section - Only for Users */}
+        {!isAdmin && !isSuperAdmin && (
+          <div className="pt-6">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Calling Data
+            </p>
+            <div className="space-y-1">
+              <Link href="/dashboard/calling-data">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all duration-200"
+                >
+                  <PhoneCall className="mr-3 h-4 w-4" />
+                  My Calling Data
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* User Info */}

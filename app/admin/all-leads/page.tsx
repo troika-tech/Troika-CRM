@@ -8,7 +8,9 @@ import { Header } from '@/components/header'
 import { LeadTable } from '@/components/lead-table'
 import { ExportDialog } from '@/components/export-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { FileText, Download, Plus } from 'lucide-react'
+import Link from 'next/link'
 
 export default function AllLeadsPage() {
   const { data: session, status } = useSession()
@@ -48,12 +50,20 @@ export default function AllLeadsPage() {
           
           <div className="flex-1 p-6">
             <div className="max-w-7xl mx-auto">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                  <FileText className="mr-3 h-8 w-8 text-indigo-500" />
-                  All Leads
-                </h1>
-                <p className="text-gray-600">View and manage all leads in the system</p>
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                    <FileText className="mr-3 h-8 w-8 text-indigo-500" />
+                    All Leads
+                  </h1>
+                  <p className="text-gray-600">View and manage all leads in the system</p>
+                </div>
+                <Link href="/admin/all-leads/add">
+                  <Button className="flex items-center space-x-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Add Lead</span>
+                  </Button>
+                </Link>
               </div>
 
               {/* All Leads Table */}

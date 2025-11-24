@@ -27,6 +27,7 @@ const editUserSchema = z.object({
   ),
   password: z.string().optional(),
   changePassword: z.boolean().optional(),
+  assignedUserIds: z.array(z.string()).optional(),
 })
 
 type EditUserInput = z.infer<typeof editUserSchema>
@@ -37,9 +38,17 @@ interface User {
   email: string
   role: string
   createdAt: string
+  assignedUserIds?: string[]
   _count: {
     leads: number
   }
+}
+
+interface AvailableUser {
+  id: string
+  name: string | null
+  email: string
+  status?: string
 }
 
 interface EditUserDialogProps {
@@ -52,7 +61,11 @@ interface EditUserDialogProps {
 export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: EditUserDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [changePassword, setChangePassword] = useState(false)
+  const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([])
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
   const { toast } = useToast()
+  const isAdmin = user?.role === 'ADMIN'
 
   const {
     register,
@@ -70,9 +83,54 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
       setValue('email', user.email)
       setValue('mobile', '') // We don't store mobile in the current schema
       setValue('password', '')
+      setValue('assignedUserIds', user.assignedUserIds || [])
       setChangePassword(false)
+      setSelectedUserIds(user.assignedUserIds || [])
     }
   }, [user, setValue])
+
+  useEffect(() => {
+    if (open && isAdmin) {
+      fetchAvailableUsers()
+    }
+  }, [open, isAdmin])
+
+  const fetchAvailableUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const response = await fetch('/api/users/available')
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Available users response:', data)
+        setAvailableUsers(data.users || [])
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Failed to fetch available users:', errorData)
+        toast({
+          title: 'Error',
+          description: 'Failed to load available users',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching available users:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load available users',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+
+  const handleUserToggle = (userId: string) => {
+    const newSelection = selectedUserIds.includes(userId)
+      ? selectedUserIds.filter(id => id !== userId)
+      : [...selectedUserIds, userId]
+    setSelectedUserIds(newSelection)
+    setValue('assignedUserIds', newSelection)
+  }
 
   const onSubmit = async (data: EditUserInput) => {
     if (!user) return
@@ -87,6 +145,10 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
 
       if (changePassword && data.password) {
         updateData.password = data.password
+      }
+
+      if (isAdmin && data.assignedUserIds !== undefined) {
+        updateData.assignedUserIds = data.assignedUserIds
       }
 
       const response = await fetch('/api/users', {
@@ -198,6 +260,63 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
               </div>
             )}
           </div>
+
+          {isAdmin && (
+            <div className="space-y-2">
+              <Label>Assign Users <span className="text-gray-500">(Optional)</span></Label>
+              <div className="border rounded-md p-4 max-h-60 overflow-y-auto bg-gray-50">
+                {loadingUsers ? (
+                  <div className="text-center py-4 text-gray-500">Loading users...</div>
+                ) : availableUsers.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">No users available</div>
+                ) : (
+                  <div className="space-y-2">
+                    {availableUsers.map((availableUser) => {
+                      const isSelected = selectedUserIds.includes(availableUser.id)
+                      const isActive = availableUser.status === 'ACTIVE'
+                      return (
+                        <div 
+                          key={availableUser.id} 
+                          className={`flex items-center space-x-2 p-2 rounded hover:bg-gray-100 transition-colors ${
+                            isSelected ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <Checkbox
+                            id={`user-${availableUser.id}`}
+                            checked={isSelected}
+                            onCheckedChange={() => handleUserToggle(availableUser.id)}
+                          />
+                          <Label
+                            htmlFor={`user-${availableUser.id}`}
+                            className="text-sm font-normal cursor-pointer flex-1"
+                          >
+                            <span className="font-medium">
+                              {availableUser.name || 'No name'}
+                            </span>
+                            <span className="text-gray-500 ml-1">
+                              ({availableUser.email})
+                            </span>
+                            {availableUser.status && (
+                              <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
+                                isActive 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {availableUser.status}
+                              </span>
+                            )}
+                          </Label>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">
+                Select multiple users to assign to this admin. They will be able to manage these users.
+              </p>
+            </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleCancel}>

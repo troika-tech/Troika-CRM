@@ -11,6 +11,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
 import { Edit, Trash2 } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const editLeadSchema = z.object({
   customerName: z.string().min(2, 'Customer name must be at least 2 characters'),
@@ -23,6 +30,9 @@ const editLeadSchema = z.object({
   industryName: z.string().min(2, 'Industry name must be at least 2 characters').optional().or(z.literal('')),
   followUpDate: z.string().optional(),
   shortDescription: z.string().min(10, 'Short description must be at least 10 characters').optional().or(z.literal('')),
+  leadStatus: z.enum(['Lead', 'Prospect', 'Other'], {
+    required_error: 'Please select a lead status',
+  }),
 })
 
 interface Lead {
@@ -34,6 +44,7 @@ interface Lead {
   industryName?: string | null
   shortDescription?: string | null
   followUpDate?: string | null
+  leadStatus?: string | null
   createdAt: string
   createdBy?: {
     name: string | null
@@ -60,6 +71,7 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
     formState: { errors },
     reset,
     setValue,
+    watch,
   } = useForm<z.infer<typeof editLeadSchema>>({
     resolver: zodResolver(editLeadSchema),
   })
@@ -74,6 +86,7 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
       setValue('industryName', lead.industryName || '')
       setValue('shortDescription', lead.shortDescription || '')
       setValue('followUpDate', lead.followUpDate ? new Date(lead.followUpDate).toISOString().split('T')[0] : '')
+      setValue('leadStatus', (lead.leadStatus as 'Lead' | 'Prospect' | 'Other') || 'Lead')
     }
   }, [lead, setValue])
 
@@ -239,6 +252,26 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
                 <p className="text-sm text-red-600">{errors.industryName.message}</p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="leadStatus">Lead Status <span className="text-red-500">*</span></Label>
+            <Select
+              value={watch('leadStatus') || ''}
+              onValueChange={(value) => setValue('leadStatus', value as 'Lead' | 'Prospect' | 'Other', { shouldValidate: true })}
+            >
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Select Lead Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Lead">Lead</SelectItem>
+                <SelectItem value="Prospect">Prospect</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.leadStatus && (
+              <p className="text-sm text-red-600">{errors.leadStatus.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
