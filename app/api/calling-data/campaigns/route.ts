@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     const paginatedCampaigns = campaigns.slice(skip, skip + pageSize)
 
     // Get user details for assignedBy
-    const assignedByIds = [...new Set(paginatedCampaigns.map(c => c.assignedById))]
+    const assignedByIds = Array.from(new Set(paginatedCampaigns.map(c => c.assignedById)))
     const users = await prisma.user.findMany({
       where: {
         id: { in: assignedByIds },
