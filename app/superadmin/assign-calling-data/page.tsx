@@ -114,7 +114,7 @@ export default function AssignCallingDataPage() {
     // Combine headers and rows
     const csvContent = [
       headers.join(','),
-      ...csvRows.map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      ...csvRows.map((row: any[]) => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
     ].join('\n')
 
     // Create blob and download
