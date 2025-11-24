@@ -205,11 +205,42 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
     
+    // If user is ADMIN, only show users assigned to them
+    if (session.user.role === 'ADMIN') {
+      // Get the admin's assignedUserIds
+      const admin = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { assignedUserIds: true }
+      })
+      
+      if (admin && admin.assignedUserIds.length > 0) {
+        where.id = { in: admin.assignedUserIds }
+      } else {
+        // If admin has no assigned users, return empty result
+        where.id = { in: [] }
+      }
+    }
+    // SUPERADMIN can see all users (no additional filtering)
+    
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' as const } },
-        { email: { contains: search, mode: 'insensitive' as const } }
-      ]
+      // For admin, combine search with assigned users filter using AND
+      if (session.user.role === 'ADMIN' && where.id) {
+        where.AND = [
+          { id: where.id },
+          {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' as const } },
+              { email: { contains: search, mode: 'insensitive' as const } }
+            ]
+          }
+        ]
+        delete where.id
+      } else {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } }
+        ]
+      }
     }
     
     if (role) {
