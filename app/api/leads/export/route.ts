@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const owner = searchParams.get('owner') || ''
     const dateFrom = searchParams.get('dateFrom') || ''
     const dateTo = searchParams.get('dateTo') || ''
-    const leadStatus = searchParams.get('leadStatus') || ''
+    const leadType = searchParams.get('leadType') || ''
 
     // Check if user is admin or superadmin for viewing all leads
     const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SUPERADMIN'
@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (leadStatus) {
-      where.leadStatus = leadStatus
+    if (leadType) {
+      where.leadType = leadType
     }
 
     // Build orderBy clause
@@ -99,9 +99,9 @@ export async function GET(request: NextRequest) {
     })
 
     // Convert to CSV format
-    const csvHeaders = isAdmin 
-      ? ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Lead Status', 'Short Description', 'Follow-up Date', 'Owner', 'Created At']
-      : ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Lead Status', 'Short Description', 'Follow-up Date', 'Created At']
+    const csvHeaders = isAdmin
+      ? ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Lead Type', 'Short Description', 'Follow-up Date', 'Owner', 'Created At']
+      : ['Customer Name', 'Mobile', 'Email', 'Company Name', 'Industry Name', 'Lead Type', 'Short Description', 'Follow-up Date', 'Created At']
 
     const csvRows = leads.map(lead => {
       const baseRow = [
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         lead.email,
         lead.companyName || '',
         lead.industryName || '',
-        lead.leadStatus || 'Lead',
+        lead.leadType || '',
         lead.shortDescription || '',
         lead.followUpDate ? new Date(lead.followUpDate).toLocaleDateString('en-US') : '',
         new Date(lead.createdAt).toLocaleString('en-US', {

@@ -37,7 +37,7 @@ model Lead {
   industryName     String?
   followUpDate     DateTime?
   shortDescription String?
-  leadStatus       String?   @default("Lead")
+  leadType         String?   @default("WhatsApp Marketing")
   createdById      String    @db.ObjectId
   createdBy        User      @relation(fields: [createdById], references: [id])
   createdAt        DateTime  @default(now())
@@ -48,7 +48,7 @@ model Lead {
   @@index([createdAt])
   @@index([followUpDate])
   @@index([customerName])
-  @@index([leadStatus])
+  @@index([leadType])
 }
 
 model CallingData {

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { customerName, mobile, email, companyName, industryName, followUpDate, shortDescription, leadStatus } = validatedFields.data
+    const { customerName, mobile, email, companyName, industryName, followUpDate, shortDescription, leadType } = validatedFields.data
 
     // Normalize phone number
     const normalizedMobile = normalizePhoneNumber(mobile)
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         industryName: industryName || '',
         followUpDate: followUpDate && followUpDate.trim() ? new Date(followUpDate) : null,
         shortDescription: shortDescription || '',
-        leadStatus: leadStatus,
+        leadType: leadType,
         createdById: session.user.id
       },
       include: {
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     const owner = searchParams.get('owner') || ''
     const dateFrom = searchParams.get('dateFrom') || ''
     const dateTo = searchParams.get('dateTo') || ''
-    const leadStatus = searchParams.get('leadStatus') || ''
+    const leadType = searchParams.get('leadType') || ''
     const checkMobiles = searchParams.get('checkMobiles') === 'true'
 
     // Check if user is admin or superadmin for viewing all leads
@@ -202,8 +202,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (leadStatus) {
-      where.leadStatus = leadStatus
+    if (leadType) {
+      where.leadType = leadType
     }
 
     // Build orderBy clause

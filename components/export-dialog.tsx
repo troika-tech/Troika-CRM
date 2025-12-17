@@ -36,7 +36,7 @@ interface ExportFilters {
   dateFrom: string
   dateTo: string
   sort: string
-  leadStatus: string
+  leadType: string
 }
 
 export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDialogProps) {
@@ -57,7 +57,7 @@ export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDial
       dateFrom: '',
       dateTo: '',
       sort: 'createdAt:desc',
-      leadStatus: ''
+      leadType: ''
     }
   })
 
@@ -71,8 +71,8 @@ export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDial
         dateTo: data.dateTo,
       })
 
-      if (data.leadStatus && data.leadStatus !== 'all') {
-        params.append('leadStatus', data.leadStatus)
+      if (data.leadType && data.leadType !== 'all') {
+        params.append('leadType', data.leadType)
       }
 
       if (isAdmin) {
@@ -259,19 +259,19 @@ export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDial
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="leadStatus">Lead Status <span className="text-gray-500">(Optional)</span></Label>
+                    <Label htmlFor="leadType">Lead Type <span className="text-gray-500">(Optional)</span></Label>
                     <Select
-                      value={watch('leadStatus') || undefined}
-                      onValueChange={(value) => setValue('leadStatus', value === 'all' ? '' : value)}
+                      value={watch('leadType') || undefined}
+                      onValueChange={(value) => setValue('leadType', value === 'all' ? '' : value)}
                     >
                       <SelectTrigger className="h-10">
-                        <SelectValue placeholder="All Statuses" />
+                        <SelectValue placeholder="All Types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="Lead">Lead</SelectItem>
-                        <SelectItem value="Prospect">Prospect</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="WhatsApp Marketing">WhatsApp Marketing</SelectItem>
+                        <SelectItem value="AI Calling Agent">AI Calling Agent</SelectItem>
+                        <SelectItem value="AI Chat Agent">AI Chat Agent</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

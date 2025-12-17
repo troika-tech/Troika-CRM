@@ -305,7 +305,7 @@ export default function CallingDataPage() {
         industryName: '',
         followUpDate: '',
         shortDescription: item.designation ? `Designation: ${item.designation}` : '',
-        leadStatus: 'Lead' as const,
+        leadType: 'WhatsApp Marketing' as const,
       }
 
       const response = await fetch('/api/leads', {

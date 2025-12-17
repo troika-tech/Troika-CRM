@@ -23,8 +23,8 @@ export const leadSchema = z.object({
   industryName: z.string().optional().or(z.literal('')),
   followUpDate: z.string().optional().or(z.literal('')),
   shortDescription: z.string().optional().or(z.literal('')),
-  leadStatus: z.enum(['Lead', 'Prospect', 'Other'], {
-    required_error: 'Please select a lead status',
+  leadType: z.enum(['WhatsApp Marketing', 'AI Calling Agent', 'AI Chat Agent'], {
+    required_error: 'Please select a lead type',
   }),
 })
 

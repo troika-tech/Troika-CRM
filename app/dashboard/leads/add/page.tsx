@@ -211,27 +211,27 @@ export default function AddLeadPage() {
                       </div>
                     </div>
 
-                    {/* Lead Status and Follow-up Date - Two Columns */}
+                    {/* Lead Type and Follow-up Date - Two Columns */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="leadStatus" className="text-sm font-medium">
-                          Lead Status <span className="text-red-500">*</span>
+                        <Label htmlFor="leadType" className="text-sm font-medium">
+                          Lead Type <span className="text-red-500">*</span>
                         </Label>
                         <Select
-                          value={watch('leadStatus') || ''}
-                          onValueChange={(value) => setValue('leadStatus', value as 'Lead' | 'Prospect' | 'Other', { shouldValidate: true })}
+                          value={watch('leadType') || ''}
+                          onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent', { shouldValidate: true })}
                         >
                           <SelectTrigger className="h-11">
-                            <SelectValue placeholder="Select Lead Status" />
+                            <SelectValue placeholder="Select Lead Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Lead">Lead</SelectItem>
-                            <SelectItem value="Prospect">Prospect</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
+                            <SelectItem value="WhatsApp Marketing">WhatsApp Marketing</SelectItem>
+                            <SelectItem value="AI Calling Agent">AI Calling Agent</SelectItem>
+                            <SelectItem value="AI Chat Agent">AI Chat Agent</SelectItem>
                           </SelectContent>
                         </Select>
-                        {errors.leadStatus && (
-                          <p className="text-sm text-red-600 mt-1">{errors.leadStatus.message}</p>
+                        {errors.leadType && (
+                          <p className="text-sm text-red-600 mt-1">{errors.leadType.message}</p>
                         )}
                       </div>
 

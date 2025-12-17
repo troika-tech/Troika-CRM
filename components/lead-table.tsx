@@ -23,6 +23,7 @@ interface Lead {
   email: string
   companyName?: string | null
   industryName?: string | null
+  leadType?: string | null
   shortDescription?: string | null
   followUpDate?: string | null
   createdAt: string
@@ -198,132 +199,146 @@ export function LeadTable({ isAdmin = false, onExport }: LeadTableProps) {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left px-3 py-2 min-w-[140px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('customerName')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
                         Customer Name {getSortIcon('customerName')}
                       </Button>
                     </th>
-                    <th className="text-left p-2">
+                    <th className="text-left px-3 py-2 min-w-[110px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('mobile')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
                         Mobile {getSortIcon('mobile')}
                       </Button>
                     </th>
-                    <th className="text-left p-2">
+                    <th className="text-left px-3 py-2 min-w-[140px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('email')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
                         Email {getSortIcon('email')}
                       </Button>
                     </th>
-                    <th className="text-left p-2">
+                    <th className="text-left px-3 py-2 min-w-[120px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('companyName')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
                         Company {getSortIcon('companyName')}
                       </Button>
                     </th>
-                    <th className="text-left p-2">
+                    <th className="text-left px-3 py-2 min-w-[100px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('industryName')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
                         Industry {getSortIcon('industryName')}
                       </Button>
                     </th>
-                    <th className="text-left p-2">
+                    <th className="text-left px-3 py-2 min-w-[130px]">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('leadType')}
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
+                      >
+                        Lead Type {getSortIcon('leadType')}
+                      </Button>
+                    </th>
+                    <th className="text-left px-3 py-2 min-w-[180px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('shortDescription')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
-                        Short Description {getSortIcon('shortDescription')}
+                        Description {getSortIcon('shortDescription')}
                       </Button>
                     </th>
-                    <th className="text-left p-2">
+                    <th className="text-left px-3 py-2 min-w-[110px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('followUpDate')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
-                        Follow-up Date {getSortIcon('followUpDate')}
+                        Follow-up {getSortIcon('followUpDate')}
                       </Button>
                     </th>
                     {isAdmin && (
-                      <th className="text-left p-2">
+                      <th className="text-left px-3 py-2 min-w-[100px]">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('createdBy')}
-                          className="h-auto p-0 font-semibold"
+                          className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                         >
                           Owner {getSortIcon('createdBy')}
                         </Button>
                       </th>
                     )}
-                    <th className="text-left p-2">
+                    <th className="text-left px-3 py-2 min-w-[130px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('createdAt')}
-                        className="h-auto p-0 font-semibold"
+                        className="h-auto p-0 font-semibold text-xs hover:bg-transparent"
                       >
                         Created At {getSortIcon('createdAt')}
                       </Button>
                     </th>
-                    <th className="text-left p-2 font-semibold">Actions</th>
+                    <th className="text-left px-3 py-2 font-semibold text-xs sticky right-0 bg-gray-50">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white divide-y divide-gray-100">
                   {leads.map((lead) => (
-                    <tr key={lead.id} className="border-b hover:bg-gray-50">
-                      <td className="p-2 font-medium">{lead.customerName}</td>
-                      <td className="p-2">{lead.mobile}</td>
-                      <td className="p-2">{lead.email}</td>
-                      <td className="p-2">{lead.companyName || '-'}</td>
-                      <td className="p-2">{lead.industryName || '-'}</td>
-                      <td className="p-2 max-w-xs">
-                        <div className="truncate" title={lead.shortDescription || ''}>
+                    <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-3 py-2.5 font-medium text-gray-900">{lead.customerName}</td>
+                      <td className="px-3 py-2.5 text-gray-700 whitespace-nowrap">{lead.mobile}</td>
+                      <td className="px-3 py-2.5 text-gray-600 text-xs">{lead.email}</td>
+                      <td className="px-3 py-2.5 text-gray-700">{lead.companyName || '-'}</td>
+                      <td className="px-3 py-2.5 text-gray-700">{lead.industryName || '-'}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                          {lead.leadType || '-'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 max-w-[180px]">
+                        <div className="truncate text-gray-600 text-xs" title={lead.shortDescription || ''}>
                           {lead.shortDescription || '-'}
                         </div>
                       </td>
-                      <td className="p-2 text-sm text-gray-600">
-                        {lead.followUpDate ? formatDate(lead.followUpDate) : '-'}
+                      <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
+                        {lead.followUpDate ? new Date(lead.followUpDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                       </td>
                       {isAdmin && (
-                        <td className="p-2 text-sm text-gray-600">
+                        <td className="px-3 py-2.5 text-xs text-gray-600">
                           {lead.createdBy?.name || lead.createdBy?.email}
                         </td>
                       )}
-                      <td className="p-2 text-sm text-gray-600">
-                        {formatDate(lead.createdAt)}
+                      <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">
+                        {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="p-2">
+                      <td className="px-3 py-2.5 sticky right-0 bg-white">
                         {canEditLead(lead) ? (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleEditClick(lead)}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3.5 w-3.5" />
                             <span className="sr-only">Edit Lead</span>
                           </Button>
                         ) : (
-                          <span className="text-gray-400 text-sm">-</span>
+                          <span className="text-gray-400 text-xs">-</span>
                         )}
                       </td>
                     </tr>

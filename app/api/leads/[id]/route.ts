@@ -59,7 +59,7 @@ export async function PUT(
       companyName: validatedData.companyName || null,
       industryName: validatedData.industryName || null,
       shortDescription: validatedData.shortDescription || null,
-      leadStatus: validatedData.leadStatus,
+      leadType: validatedData.leadType,
     }
 
     // Handle follow-up date

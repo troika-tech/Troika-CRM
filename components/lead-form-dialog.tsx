@@ -162,21 +162,21 @@ export function LeadFormDialog({ open, onOpenChange, onLeadAdded }: LeadFormDial
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="leadStatus">Lead Status <span className="text-red-500">*</span></Label>
+            <Label htmlFor="leadType">Lead Type <span className="text-red-500">*</span></Label>
             <Select
-              onValueChange={(value) => setValue('leadStatus', value as 'Lead' | 'Prospect' | 'Other', { shouldValidate: true })}
+              onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent', { shouldValidate: true })}
             >
               <SelectTrigger className="h-11">
-                <SelectValue placeholder="Select Lead Status" />
+                <SelectValue placeholder="Select Lead Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Lead">Lead</SelectItem>
-                <SelectItem value="Prospect">Prospect</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="WhatsApp Marketing">WhatsApp Marketing</SelectItem>
+                <SelectItem value="AI Calling Agent">AI Calling Agent</SelectItem>
+                <SelectItem value="AI Chat Agent">AI Chat Agent</SelectItem>
               </SelectContent>
             </Select>
-            {errors.leadStatus && (
-              <p className="text-sm text-red-600">{errors.leadStatus.message}</p>
+            {errors.leadType && (
+              <p className="text-sm text-red-600">{errors.leadType.message}</p>
             )}
           </div>
 
