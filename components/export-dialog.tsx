@@ -272,6 +272,7 @@ export function ExportDialog({ open, onOpenChange, isAdmin = false }: ExportDial
                         <SelectItem value="WhatsApp Marketing">WhatsApp Marketing</SelectItem>
                         <SelectItem value="AI Calling Agent">AI Calling Agent</SelectItem>
                         <SelectItem value="AI Chat Agent">AI Chat Agent</SelectItem>
+                        <SelectItem value="Chat + Calling Agent">Chat + Calling Agent</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

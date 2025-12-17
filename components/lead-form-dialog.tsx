@@ -164,7 +164,7 @@ export function LeadFormDialog({ open, onOpenChange, onLeadAdded }: LeadFormDial
           <div className="space-y-2">
             <Label htmlFor="leadType">Lead Type <span className="text-red-500">*</span></Label>
             <Select
-              onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent', { shouldValidate: true })}
+              onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent' | 'Chat + Calling Agent', { shouldValidate: true })}
             >
               <SelectTrigger className="h-11">
                 <SelectValue placeholder="Select Lead Type" />
@@ -173,6 +173,7 @@ export function LeadFormDialog({ open, onOpenChange, onLeadAdded }: LeadFormDial
                 <SelectItem value="WhatsApp Marketing">WhatsApp Marketing</SelectItem>
                 <SelectItem value="AI Calling Agent">AI Calling Agent</SelectItem>
                 <SelectItem value="AI Chat Agent">AI Chat Agent</SelectItem>
+                <SelectItem value="Chat + Calling Agent">Chat + Calling Agent</SelectItem>
               </SelectContent>
             </Select>
             {errors.leadType && (

@@ -30,7 +30,7 @@ const editLeadSchema = z.object({
   industryName: z.string().min(2, 'Industry name must be at least 2 characters').optional().or(z.literal('')),
   followUpDate: z.string().optional(),
   shortDescription: z.string().min(10, 'Short description must be at least 10 characters').optional().or(z.literal('')),
-  leadType: z.enum(['WhatsApp Marketing', 'AI Calling Agent', 'AI Chat Agent'], {
+  leadType: z.enum(['WhatsApp Marketing', 'AI Calling Agent', 'AI Chat Agent', 'Chat + Calling Agent'], {
     required_error: 'Please select a lead type',
   }),
 })
@@ -86,7 +86,7 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
       setValue('industryName', lead.industryName || '')
       setValue('shortDescription', lead.shortDescription || '')
       setValue('followUpDate', lead.followUpDate ? new Date(lead.followUpDate).toISOString().split('T')[0] : '')
-      setValue('leadType', (lead.leadType as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent') || 'WhatsApp Marketing')
+      setValue('leadType', (lead.leadType as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent' | 'Chat + Calling Agent') || 'WhatsApp Marketing')
     }
   }, [lead, setValue])
 
@@ -258,7 +258,7 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
             <Label htmlFor="leadType">Lead Type <span className="text-red-500">*</span></Label>
             <Select
               value={watch('leadType') || ''}
-              onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent', { shouldValidate: true })}
+              onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent' | 'Chat + Calling Agent', { shouldValidate: true })}
             >
               <SelectTrigger className="h-11">
                 <SelectValue placeholder="Select Lead Type" />
@@ -267,6 +267,7 @@ export function EditLeadDialog({ open, onOpenChange, lead, onLeadUpdated }: Edit
                 <SelectItem value="WhatsApp Marketing">WhatsApp Marketing</SelectItem>
                 <SelectItem value="AI Calling Agent">AI Calling Agent</SelectItem>
                 <SelectItem value="AI Chat Agent">AI Chat Agent</SelectItem>
+                <SelectItem value="Chat + Calling Agent">Chat + Calling Agent</SelectItem>
               </SelectContent>
             </Select>
             {errors.leadType && (

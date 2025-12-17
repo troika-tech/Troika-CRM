@@ -219,7 +219,7 @@ export default function AddLeadPage() {
                         </Label>
                         <Select
                           value={watch('leadType') || ''}
-                          onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent', { shouldValidate: true })}
+                          onValueChange={(value) => setValue('leadType', value as 'WhatsApp Marketing' | 'AI Calling Agent' | 'AI Chat Agent' | 'Chat + Calling Agent', { shouldValidate: true })}
                         >
                           <SelectTrigger className="h-11">
                             <SelectValue placeholder="Select Lead Type" />
@@ -228,6 +228,7 @@ export default function AddLeadPage() {
                             <SelectItem value="WhatsApp Marketing">WhatsApp Marketing</SelectItem>
                             <SelectItem value="AI Calling Agent">AI Calling Agent</SelectItem>
                             <SelectItem value="AI Chat Agent">AI Chat Agent</SelectItem>
+                            <SelectItem value="Chat + Calling Agent">Chat + Calling Agent</SelectItem>
                           </SelectContent>
                         </Select>
                         {errors.leadType && (
