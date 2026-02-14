@@ -112,8 +112,16 @@ export default function CallingDataPage() {
     try {
       const mobileNumbers = campaignData.map(item => item.number)
       if (mobileNumbers.length === 0) return
-      
-      const response = await fetch(`/api/leads?search=${encodeURIComponent(mobileNumbers.join(','))}&checkMobiles=true&userOnly=true`)
+
+      // Use POST to avoid URL length limitations with large numbers of records
+      const response = await fetch('/api/leads/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mobileNumbers }),
+      })
+
       if (response.ok) {
         const data = await response.json()
         const leadsMap: Record<string, boolean> = {}
@@ -183,7 +191,7 @@ export default function CallingDataPage() {
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     setUpdatingStatus(id)
-    
+
     // Optimistically update the local state
     setCampaignData(prevData =>
       prevData.map(item =>
@@ -231,7 +239,7 @@ export default function CallingDataPage() {
       if (viewingCampaign) {
         fetchCampaignData(viewingCampaign.recordIds)
       }
-      
+
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to update status',
@@ -321,14 +329,21 @@ export default function CallingDataPage() {
     }
 
     setAddingToLeads(item.id)
-    
+
     try {
       // Check if lead already exists
-      const checkResponse = await fetch(`/api/leads?search=${encodeURIComponent(item.number)}&checkMobiles=true&userOnly=true`)
+      const checkResponse = await fetch('/api/leads/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mobileNumbers: [item.number] }),
+      })
+
       if (checkResponse.ok) {
         const checkData = await checkResponse.json()
         const existingLead = checkData.leads?.find((lead: any) => lead.mobile === item.number)
-        
+
         if (existingLead) {
           setAddedToLeads(prev => ({ ...prev, [item.id]: true }))
           toast({
@@ -674,11 +689,11 @@ export default function CallingDataPage() {
                                         <SelectItem value="Rejected">Rejected</SelectItem>
                                         <SelectItem value="other">Other</SelectItem>
                                         {item.status &&
-                                         !['none', 'Interested', 'Not Interested', 'Follow Up', 'Call Back', 'Do Not Call', 'Converted', 'Rejected', 'other'].includes(item.status) && (
-                                          <SelectItem key={`custom-${item.id}`} value={item.status}>
-                                            {item.status}
-                                          </SelectItem>
-                                        )}
+                                          !['none', 'Interested', 'Not Interested', 'Follow Up', 'Call Back', 'Do Not Call', 'Converted', 'Rejected', 'other'].includes(item.status) && (
+                                            <SelectItem key={`custom-${item.id}`} value={item.status}>
+                                              {item.status}
+                                            </SelectItem>
+                                          )}
                                       </SelectContent>
                                     </Select>
                                     {updatingStatus === item.id && (
