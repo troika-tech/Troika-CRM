@@ -132,8 +132,11 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching assignment history:', error)
+    // Return detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
+    console.error('Detailed error:', errorMessage)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: errorMessage },
       { status: 500 }
     )
   }

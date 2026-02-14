@@ -76,9 +76,22 @@ export default function AssignCallingDataPage() {
         const data = await response.json()
         setAssignmentHistory(data.data)
         setHistoryPagination(data.pagination)
+      } else {
+        const error = await response.json()
+        console.error('Error fetching assignment history:', error)
+        toast({
+          title: 'Error',
+          description: `Failed to load assignment history: ${error.details || error.error || 'Unknown error'}`,
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Error fetching assignment history:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load assignment history. Please try again.',
+        variant: 'destructive',
+      })
     } finally {
       setLoadingHistory(false)
     }

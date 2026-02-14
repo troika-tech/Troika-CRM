@@ -11,13 +11,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only Admin and SuperAdmin can assign data
+    const body = await request.json()
+    const { data, assignedToId, ids } = body
+
+    // If 'ids' is provided, this is a fetch request (not create)
+    if (ids && Array.isArray(ids)) {
+      // Build where clause
+      const where: any = {
+        id: { in: ids }
+      }
+
+      // Regular users can only see their own assigned data
+      if (session.user.role === 'USER') {
+        where.assignedToId = session.user.id
+      }
+
+      // Fetch calling data by IDs
+      const callingData = await prisma.callingData.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          assignedBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      })
+
+      return NextResponse.json({
+        data: callingData,
+        pagination: {
+          page: 1,
+          pageSize: callingData.length,
+          total: callingData.length,
+          totalPages: 1,
+        },
+      })
+    }
+
+    // Otherwise, this is a create request - Only Admin and SuperAdmin can assign data
     if (session.user.role !== 'ADMIN' && session.user.role !== 'SUPERADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
-
-    const body = await request.json()
-    const { data, assignedToId } = body
 
     if (!data || !Array.isArray(data) || data.length === 0) {
       return NextResponse.json({ error: 'Data is required and must be an array' }, { status: 400 })
