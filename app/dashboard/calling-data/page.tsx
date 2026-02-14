@@ -67,6 +67,19 @@ export default function CallingDataPage() {
   const [addingToLeads, setAddingToLeads] = useState<string | null>(null)
   const { toast } = useToast()
 
+  // Column widths state for resizing
+  const [columnWidths, setColumnWidths] = useState({
+    name: 120,
+    number: 110,
+    company: 120,
+    designation: 110,
+    status: 220,
+    addToLead: 130,
+  })
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null)
+  const [resizeStartX, setResizeStartX] = useState(0)
+  const [resizeStartWidth, setResizeStartWidth] = useState(0)
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
@@ -267,6 +280,39 @@ export default function CallingDataPage() {
     setCustomStatusValues(prev => ({ ...prev, [id]: value }))
   }
 
+  // Column resize handlers
+  const handleResizeStart = (e: React.MouseEvent, column: string) => {
+    e.preventDefault()
+    setResizingColumn(column)
+    setResizeStartX(e.clientX)
+    setResizeStartWidth(columnWidths[column as keyof typeof columnWidths])
+  }
+
+  useEffect(() => {
+    if (!resizingColumn) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizeStartX
+      const newWidth = Math.max(80, resizeStartWidth + diff) // Minimum width of 80px
+      setColumnWidths(prev => ({
+        ...prev,
+        [resizingColumn]: newWidth,
+      }))
+    }
+
+    const handleMouseUp = () => {
+      setResizingColumn(null)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [resizingColumn, resizeStartX, resizeStartWidth])
+
   const handleAddToLeadSheet = async (item: CallingData, checked: boolean) => {
     if (!checked) {
       // If unchecking, we don't remove the lead, just update the UI state
@@ -368,267 +414,303 @@ export default function CallingDataPage() {
               <p className="text-gray-600">View and manage your assigned calling data</p>
             </div>
 
-            <div className="grid grid-cols-12 gap-6 h-[calc(100vh-200px)]">
-              {/* Left Side - Campaigns List */}
-              <div className="col-span-4">
-                <Card className="h-full flex flex-col">
-                  <CardHeader>
-                    <CardTitle>Campaigns ({pagination.total})</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 overflow-y-auto">
-                    {loading ? (
-                      <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                        <p className="mt-2 text-gray-600">Loading...</p>
-                      </div>
-                    ) : campaigns.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
-                        <PhoneCall className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No campaigns assigned to you yet</p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="space-y-2">
-                          {campaigns.map((campaign) => (
-                            <div
-                              key={campaign.id}
-                              onClick={() => handleViewCampaign(campaign)}
-                              className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                                viewingCampaign?.id === campaign.id
-                                  ? 'bg-indigo-50 border-indigo-300 shadow-sm'
-                                  : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <p className="font-semibold text-gray-900">
-                                    {campaign.assignedBy.name || campaign.assignedBy.email}
-                                  </p>
-                                  <p className="text-sm text-gray-500 mt-1">
-                                    {campaign.recordCount} records
-                                  </p>
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    {new Date(campaign.createdAt).toLocaleDateString()}
-                                  </p>
-                                </div>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Pagination */}
-                        {pagination.totalPages > 1 && (
-                          <div className="mt-4 pt-4 border-t space-y-2">
-                            <p className="text-xs text-gray-600 text-center">
-                              Page {page} of {pagination.totalPages}
-                            </p>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setPage(page - 1)}
-                                disabled={page === 1}
-                                className="flex-1"
-                              >
-                                <ChevronLeft className="h-4 w-4 mr-1" />
-                                Previous
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setPage(page + 1)}
-                                disabled={page >= pagination.totalPages}
-                                className="flex-1"
-                              >
-                                Next
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Side - Campaign Details */}
-              <div className="col-span-8">
-                {!viewingCampaign ? (
-                  <Card className="h-full flex items-center justify-center">
-                    <div className="text-center text-gray-400 p-8">
-                      <Eye className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                      <p className="text-lg">Select a campaign to view details</p>
+            {/* Step 1: Campaign List OR Step 2: Full Page Table */}
+            {!viewingCampaign ? (
+              /* Step 1: Campaign List */
+              <Card>
+                <CardHeader>
+                  <CardTitle>Campaigns ({pagination.total})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                      <p className="mt-2 text-gray-600">Loading...</p>
                     </div>
-                  </Card>
-                ) : (
-                  <Card className="h-full flex flex-col">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>Campaign Details</CardTitle>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Records assigned on {new Date(viewingCampaign.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setViewingCampaign(null)
-                            setCampaignData([])
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 overflow-y-auto">
-                      {viewingCampaign && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
-                            <div>
-                              <span className="font-semibold">Assigned By:</span>{' '}
-                              {viewingCampaign.assignedBy.name || viewingCampaign.assignedBy.email}
-                            </div>
-                            <div>
-                              <span className="font-semibold">Total Records:</span> {viewingCampaign.recordCount}
-                            </div>
-                            <div className="col-span-2">
-                              <span className="font-semibold">Date:</span>{' '}
-                              {new Date(viewingCampaign.createdAt).toLocaleString()}
+                  ) : campaigns.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <PhoneCall className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No campaigns assigned to you yet</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {campaigns.map((campaign) => (
+                          <div
+                            key={campaign.id}
+                            onClick={() => handleViewCampaign(campaign)}
+                            className="p-6 rounded-lg border bg-white border-gray-200 hover:bg-gray-50 hover:border-indigo-300 hover:shadow-md cursor-pointer transition-all"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="font-semibold text-gray-900 text-lg mb-2">
+                                  {campaign.assignedBy.name || campaign.assignedBy.email}
+                                </p>
+                                <p className="text-sm text-gray-500 mb-1">
+                                  <span className="font-medium">{campaign.recordCount}</span> records
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {new Date(campaign.createdAt).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                              <ChevronRight className="h-5 w-5 text-gray-400 mt-1" />
                             </div>
                           </div>
+                        ))}
+                      </div>
 
-                          <div className="border-t pt-4">
-                            <h3 className="font-semibold mb-4">Records</h3>
-                            {loadingCampaignData ? (
-                              <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                                <p className="mt-2 text-gray-600">Loading records...</p>
-                              </div>
-                            ) : campaignData.length === 0 ? (
-                              <p className="text-center text-gray-400 py-4">No records found</p>
-                            ) : (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="border-b bg-gray-50">
-                                      <th className="text-left p-2 font-semibold text-gray-700">Name</th>
-                                      <th className="text-left p-2 font-semibold text-gray-700">Number</th>
-                                      <th className="text-left p-2 font-semibold text-gray-700">Company</th>
-                                      <th className="text-left p-2 font-semibold text-gray-700">Designation</th>
-                                      <th className="text-left p-2 font-semibold text-gray-700">Status</th>
-                                      <th className="text-left p-2 font-semibold text-gray-700">Add To Lead</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {campaignData.map((item) => (
-                                      <tr key={item.id} className="border-b hover:bg-gray-50">
-                                        <td className="p-2">{item.name}</td>
-                                        <td className="p-2">{item.number}</td>
-                                        <td className="p-2">{item.companyName || '-'}</td>
-                                        <td className="p-2">{item.designation || '-'}</td>
-                                        <td className="p-2">
-                                          {customStatusMode === item.id ? (
-                                            <div className="flex items-center space-x-2">
-                                              <Input
-                                                type="text"
-                                                value={customStatusValues[item.id] || ''}
-                                                onChange={(e) => handleCustomStatusValueChange(item.id, e.target.value)}
-                                                placeholder="Enter custom status"
-                                                className="w-40 h-8 text-sm"
-                                                onKeyDown={(e) => {
-                                                  if (e.key === 'Enter') {
-                                                    handleCustomStatusSubmit(item.id)
-                                                  } else if (e.key === 'Escape') {
-                                                    handleCustomStatusCancel(item.id)
-                                                  }
-                                                }}
-                                                autoFocus
-                                              />
-                                              <Button
-                                                size="sm"
-                                                onClick={() => handleCustomStatusSubmit(item.id)}
-                                                disabled={updatingStatus === item.id || !(customStatusValues[item.id] || '').trim()}
-                                                className="h-8 text-xs"
-                                              >
-                                                Save
-                                              </Button>
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => handleCustomStatusCancel(item.id)}
-                                                disabled={updatingStatus === item.id}
-                                                className="h-8 px-2"
-                                              >
-                                                <X className="h-3 w-3" />
-                                              </Button>
-                                            </div>
-                                          ) : (
-                                            <div className="flex items-center space-x-2">
-                                              <Select
-                                                value={item.status ? item.status : 'none'}
-                                                onValueChange={(value) => handleStatusChange(item.id, value)}
-                                                disabled={updatingStatus === item.id}
-                                              >
-                                                <SelectTrigger className={`w-40 h-8 text-sm ${updatingStatus === item.id ? 'opacity-50' : ''}`}>
-                                                  <SelectValue placeholder="Select status" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                  <SelectItem value="none">No Status</SelectItem>
-                                                  <SelectItem value="Interested">Interested</SelectItem>
-                                                  <SelectItem value="Not Interested">Not Interested</SelectItem>
-                                                  <SelectItem value="Follow Up">Follow Up</SelectItem>
-                                                  <SelectItem value="Call Back">Call Back</SelectItem>
-                                                  <SelectItem value="Do Not Call">Do Not Call</SelectItem>
-                                                  <SelectItem value="Converted">Converted</SelectItem>
-                                                  <SelectItem value="Rejected">Rejected</SelectItem>
-                                                  <SelectItem value="other">Other</SelectItem>
-                                                  {item.status &&
-                                                   !['none', 'Interested', 'Not Interested', 'Follow Up', 'Call Back', 'Do Not Call', 'Converted', 'Rejected', 'other'].includes(item.status) && (
-                                                    <SelectItem key={`custom-${item.id}`} value={item.status}>
-                                                      {item.status}
-                                                    </SelectItem>
-                                                  )}
-                                                </SelectContent>
-                                              </Select>
-                                              {updatingStatus === item.id && (
-                                                <span className="text-xs text-gray-500 animate-pulse">Updating...</span>
-                                              )}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="p-2">
-                                          <div className="flex items-center space-x-2">
-                                            <Switch
-                                              checked={addedToLeads[item.id] || false}
-                                              onCheckedChange={(checked) => handleAddToLeadSheet(item, checked)}
-                                              disabled={addingToLeads === item.id}
-                                            />
-                                            {addingToLeads === item.id && (
-                                              <span className="text-xs text-gray-500 animate-pulse">Adding...</span>
-                                            )}
-                                            {addedToLeads[item.id] && addingToLeads !== item.id && (
-                                              <span className="text-xs text-green-600">Added</span>
-                                            )}
-                                          </div>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
+                      {/* Pagination */}
+                      {pagination.totalPages > 1 && (
+                        <div className="mt-6 flex items-center justify-between">
+                          <p className="text-sm text-gray-600">
+                            Page {page} of {pagination.totalPages}
+                          </p>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPage(page - 1)}
+                              disabled={page === 1}
+                            >
+                              <ChevronLeft className="h-4 w-4 mr-1" />
+                              Previous
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPage(page + 1)}
+                              disabled={page >= pagination.totalPages}
+                            >
+                              Next
+                              <ChevronRight className="h-4 w-4 ml-1" />
+                            </Button>
                           </div>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              /* Step 2: Full Page Excel-like Table */
+              <Card className="h-[calc(100vh-200px)] flex flex-col">
+                <CardHeader className="border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setViewingCampaign(null)
+                          setCampaignData([])
+                        }}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Back
+                      </Button>
+                      <div>
+                        <CardTitle className="text-xl">Campaign Details</CardTitle>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Assigned by {viewingCampaign.assignedBy.name || viewingCampaign.assignedBy.email} on{' '}
+                          {new Date(viewingCampaign.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <span className="font-semibold">{campaignData.length}</span> records
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-1 overflow-auto p-0">
+                  {loadingCampaignData ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Loading records...</p>
+                      </div>
+                    </div>
+                  ) : campaignData.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-center text-gray-400">No records found</p>
+                    </div>
+                  ) : (
+                    <div className="h-full overflow-auto border border-gray-300">
+                      <table className="w-full text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
+                        <colgroup>
+                          <col style={{ width: `${columnWidths.name}px` }} />
+                          <col style={{ width: `${columnWidths.number}px` }} />
+                          <col style={{ width: `${columnWidths.company}px` }} />
+                          <col style={{ width: `${columnWidths.designation}px` }} />
+                          <col style={{ width: `${columnWidths.status}px` }} />
+                          <col style={{ width: `${columnWidths.addToLead}px` }} />
+                        </colgroup>
+                        <thead className="sticky top-0 bg-gray-100 z-10">
+                          <tr>
+                            <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                              <div className="truncate">Name</div>
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                onMouseDown={(e) => handleResizeStart(e, 'name')}
+                              />
+                            </th>
+                            <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                              <div className="truncate">Number</div>
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                onMouseDown={(e) => handleResizeStart(e, 'number')}
+                              />
+                            </th>
+                            <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                              <div className="truncate">Company</div>
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                onMouseDown={(e) => handleResizeStart(e, 'company')}
+                              />
+                            </th>
+                            <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                              <div className="truncate">Designation</div>
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                onMouseDown={(e) => handleResizeStart(e, 'designation')}
+                              />
+                            </th>
+                            <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                              <div className="truncate">Status</div>
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                onMouseDown={(e) => handleResizeStart(e, 'status')}
+                              />
+                            </th>
+                            <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                              <div className="truncate">Add To Lead</div>
+                              <div
+                                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                onMouseDown={(e) => handleResizeStart(e, 'addToLead')}
+                              />
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white">
+                          {campaignData.map((item, index) => (
+                            <tr key={item.id} className="hover:bg-blue-50">
+                              <td className="p-2 border border-gray-300 bg-white">
+                                <div className="truncate font-medium" title={item.name}>{item.name}</div>
+                              </td>
+                              <td className="p-2 border border-gray-300 bg-white">
+                                <div className="truncate" title={item.number}>{item.number}</div>
+                              </td>
+                              <td className="p-2 border border-gray-300 bg-white">
+                                <div className="truncate text-gray-700" title={item.companyName || '-'}>{item.companyName || '-'}</div>
+                              </td>
+                              <td className="p-2 border border-gray-300 bg-white">
+                                <div className="truncate text-gray-700" title={item.designation || '-'}>{item.designation || '-'}</div>
+                              </td>
+                              <td className="p-2 border border-gray-300 bg-white">
+                                {customStatusMode === item.id ? (
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      type="text"
+                                      value={customStatusValues[item.id] || ''}
+                                      onChange={(e) => handleCustomStatusValueChange(item.id, e.target.value)}
+                                      placeholder="Enter custom status"
+                                      className="w-44 h-9 text-sm"
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          handleCustomStatusSubmit(item.id)
+                                        } else if (e.key === 'Escape') {
+                                          handleCustomStatusCancel(item.id)
+                                        }
+                                      }}
+                                      autoFocus
+                                    />
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleCustomStatusSubmit(item.id)}
+                                      disabled={updatingStatus === item.id || !(customStatusValues[item.id] || '').trim()}
+                                      className="h-9 text-xs px-3"
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleCustomStatusCancel(item.id)}
+                                      disabled={updatingStatus === item.id}
+                                      className="h-9 px-2"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center space-x-2">
+                                    <Select
+                                      value={item.status ? item.status : 'none'}
+                                      onValueChange={(value) => handleStatusChange(item.id, value)}
+                                      disabled={updatingStatus === item.id}
+                                    >
+                                      <SelectTrigger className={`w-44 h-9 text-sm ${updatingStatus === item.id ? 'opacity-50' : ''}`}>
+                                        <SelectValue placeholder="Select status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">No Status</SelectItem>
+                                        <SelectItem value="Interested">Interested</SelectItem>
+                                        <SelectItem value="Not Interested">Not Interested</SelectItem>
+                                        <SelectItem value="Follow Up">Follow Up</SelectItem>
+                                        <SelectItem value="Call Back">Call Back</SelectItem>
+                                        <SelectItem value="Do Not Call">Do Not Call</SelectItem>
+                                        <SelectItem value="Converted">Converted</SelectItem>
+                                        <SelectItem value="Rejected">Rejected</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
+                                        {item.status &&
+                                         !['none', 'Interested', 'Not Interested', 'Follow Up', 'Call Back', 'Do Not Call', 'Converted', 'Rejected', 'other'].includes(item.status) && (
+                                          <SelectItem key={`custom-${item.id}`} value={item.status}>
+                                            {item.status}
+                                          </SelectItem>
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                    {updatingStatus === item.id && (
+                                      <span className="text-xs text-gray-500 animate-pulse">Updating...</span>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="p-2 border border-gray-300 bg-white">
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    checked={addedToLeads[item.id] || false}
+                                    onCheckedChange={(checked) => handleAddToLeadSheet(item, checked)}
+                                    disabled={addingToLeads === item.id}
+                                  />
+                                  {addingToLeads === item.id && (
+                                    <span className="text-xs text-gray-500 animate-pulse">Adding...</span>
+                                  )}
+                                  {addedToLeads[item.id] && addingToLeads !== item.id && (
+                                    <span className="text-xs text-green-600 font-medium">Added</span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

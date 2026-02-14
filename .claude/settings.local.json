@@ -20,7 +20,11 @@
       "Bash(git remote add:*)",
       "Bash(git push:*)",
       "Bash(git remote set-url:*)",
-      "Bash(timeout 10 curl -sI https://crm.troikatech.in)"
+      "Bash(timeout 10 curl -sI https://crm.troikatech.in)",
+      "Bash(npm install:*)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command \"\\(Get-Item leads_export.csv\\).Length / 1KB\")",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []
