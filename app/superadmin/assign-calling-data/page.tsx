@@ -18,14 +18,8 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
-import { Upload, FileText, Clipboard, Users, Eye, History, ChevronLeft, ChevronRight, Download } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Upload, FileText, Clipboard, Users, Eye, History, ChevronLeft, ChevronRight, Download, X } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 
 interface CallingDataRow {
   name: string
@@ -51,7 +45,19 @@ export default function AssignCallingDataPage() {
   const [historyPagination, setHistoryPagination] = useState({ page: 1, pageSize: 10, total: 0, totalPages: 0 })
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [viewingAssignment, setViewingAssignment] = useState<any | null>(null)
-  const [showViewDialog, setShowViewDialog] = useState(false)
+  const [loadingAssignmentData, setLoadingAssignmentData] = useState(false)
+
+  // Column widths state for resizing
+  const [columnWidths, setColumnWidths] = useState({
+    name: 120,
+    number: 110,
+    company: 120,
+    designation: 110,
+    status: 220,
+  })
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null)
+  const [resizeStartX, setResizeStartX] = useState(0)
+  const [resizeStartWidth, setResizeStartWidth] = useState(0)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -99,8 +105,40 @@ export default function AssignCallingDataPage() {
 
   const handleViewAssignment = (assignment: any) => {
     setViewingAssignment(assignment)
-    setShowViewDialog(true)
   }
+
+  // Column resize handlers
+  const handleResizeStart = (e: React.MouseEvent, column: string) => {
+    e.preventDefault()
+    setResizingColumn(column)
+    setResizeStartX(e.clientX)
+    setResizeStartWidth(columnWidths[column as keyof typeof columnWidths])
+  }
+
+  useEffect(() => {
+    if (!resizingColumn) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizeStartX
+      const newWidth = Math.max(80, resizeStartWidth + diff) // Minimum width of 80px
+      setColumnWidths(prev => ({
+        ...prev,
+        [resizingColumn]: newWidth,
+      }))
+    }
+
+    const handleMouseUp = () => {
+      setResizingColumn(null)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [resizingColumn, resizeStartX, resizeStartWidth])
 
   const handleExportAssignment = (assignment: any) => {
     if (!assignment || !assignment.records || assignment.records.length === 0) {
@@ -333,16 +371,18 @@ export default function AssignCallingDataPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="flex">
         <ModernSidebar />
-        
+
         <div className="flex-1 flex flex-col ml-64">
           <Header />
-          
+
           <div className="flex-1 p-6">
             <div className="max-w-7xl mx-auto">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Assign Data For Calling</h1>
-                <p className="text-gray-600">Upload and assign calling data to users</p>
-              </div>
+              {!viewingAssignment ? (
+                <>
+                  <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Assign Data For Calling</h1>
+                    <p className="text-gray-600">Upload and assign calling data to users</p>
+                  </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Upload Section */}
@@ -595,100 +635,150 @@ export default function AssignCallingDataPage() {
                   )}
                 </CardContent>
               </Card>
+                </>
+              ) : (
+                /* Step 2: Full Page Excel-like Table */
+                <Card className="h-[calc(100vh-200px)] flex flex-col">
+                  <CardHeader className="border-b">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setViewingAssignment(null)
+                          }}
+                        >
+                          <ChevronLeft className="h-4 w-4 mr-1" />
+                          Back
+                        </Button>
+                        <div>
+                          <CardTitle className="text-xl">Assignment Details</CardTitle>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Assigned to {viewingAssignment.assignedTo.name || viewingAssignment.assignedTo.email} by{' '}
+                            {viewingAssignment.assignedBy.name || viewingAssignment.assignedBy.email} on{' '}
+                            {new Date(viewingAssignment.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleExportAssignment(viewingAssignment)}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Export
+                        </Button>
+                        <div className="text-sm text-gray-600">
+                          <span className="font-semibold">{viewingAssignment.records?.length || 0}</span> records
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-auto p-0">
+                    {viewingAssignment.records && viewingAssignment.records.length > 0 ? (
+                      <div className="h-full overflow-auto border border-gray-300">
+                        <table className="w-full text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
+                          <colgroup>
+                            <col style={{ width: `${columnWidths.name}px` }} />
+                            <col style={{ width: `${columnWidths.number}px` }} />
+                            <col style={{ width: `${columnWidths.company}px` }} />
+                            <col style={{ width: `${columnWidths.designation}px` }} />
+                            <col style={{ width: `${columnWidths.status}px` }} />
+                          </colgroup>
+                          <thead className="sticky top-0 bg-gray-100 z-10">
+                            <tr>
+                              <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                                <div className="truncate">Name</div>
+                                <div
+                                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                  onMouseDown={(e) => handleResizeStart(e, 'name')}
+                                />
+                              </th>
+                              <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                                <div className="truncate">Number</div>
+                                <div
+                                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                  onMouseDown={(e) => handleResizeStart(e, 'number')}
+                                />
+                              </th>
+                              <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                                <div className="truncate">Company</div>
+                                <div
+                                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                  onMouseDown={(e) => handleResizeStart(e, 'company')}
+                                />
+                              </th>
+                              <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                                <div className="truncate">Designation</div>
+                                <div
+                                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                  onMouseDown={(e) => handleResizeStart(e, 'designation')}
+                                />
+                              </th>
+                              <th className="text-left p-2 font-semibold text-gray-800 relative border border-gray-300 bg-gray-100">
+                                <div className="truncate">Status</div>
+                                <div
+                                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-400 active:bg-indigo-600 z-20"
+                                  onMouseDown={(e) => handleResizeStart(e, 'status')}
+                                />
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white">
+                            {viewingAssignment.records.map((record: any, index: number) => (
+                              <tr key={record.id} className="hover:bg-blue-50">
+                                <td className="p-2 border border-gray-300 bg-white">
+                                  <div className="truncate font-medium" title={record.name}>{record.name}</div>
+                                </td>
+                                <td className="p-2 border border-gray-300 bg-white">
+                                  <div className="truncate" title={record.number}>{record.number}</div>
+                                </td>
+                                <td className="p-2 border border-gray-300 bg-white">
+                                  <div className="truncate text-gray-700" title={record.companyName || '-'}>{record.companyName || '-'}</div>
+                                </td>
+                                <td className="p-2 border border-gray-300 bg-white">
+                                  <div className="truncate text-gray-700" title={record.designation || '-'}>{record.designation || '-'}</div>
+                                </td>
+                                <td className="p-2 border border-gray-300 bg-white">
+                                  <span className={`px-2 py-1 text-xs rounded-full inline-block ${
+                                    record.status === 'Interested' || record.status === 'Converted'
+                                      ? 'bg-green-100 text-green-800'
+                                      : record.status === 'Not Interested' || record.status === 'Rejected' || record.status === 'Do Not Call'
+                                      ? 'bg-red-100 text-red-800'
+                                      : record.status === 'Follow Up' || record.status === 'Call Back'
+                                      ? 'bg-yellow-100 text-yellow-800'
+                                      : record.status
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {record.status || 'No Status'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <p className="text-center text-gray-400">No records found</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* View Assignment Dialog */}
-      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle>Assignment Details</DialogTitle>
-                <DialogDescription>
-                  Status of all records assigned on {viewingAssignment && new Date(viewingAssignment.createdAt).toLocaleDateString()}
-                </DialogDescription>
-              </div>
-              {viewingAssignment && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleExportAssignment(viewingAssignment)}
-                  className="ml-4"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              )}
-            </div>
-          </DialogHeader>
-          {viewingAssignment && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-semibold">Assigned By:</span>{' '}
-                  {viewingAssignment.assignedBy.name || viewingAssignment.assignedBy.email}
-                </div>
-                <div>
-                  <span className="font-semibold">Assigned To:</span>{' '}
-                  {viewingAssignment.assignedTo.name || viewingAssignment.assignedTo.email}
-                </div>
-                <div>
-                  <span className="font-semibold">Total Records:</span> {viewingAssignment.recordCount}
-                </div>
-                <div>
-                  <span className="font-semibold">Date:</span>{' '}
-                  {new Date(viewingAssignment.createdAt).toLocaleString()}
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Records Status</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2 font-semibold">Name</th>
-                        <th className="text-left p-2 font-semibold">Number</th>
-                        <th className="text-left p-2 font-semibold">Company</th>
-                        <th className="text-left p-2 font-semibold">Designation</th>
-                        <th className="text-left p-2 font-semibold">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {viewingAssignment.records.map((record: any) => (
-                        <tr key={record.id} className="border-b">
-                          <td className="p-2">{record.name}</td>
-                          <td className="p-2">{record.number}</td>
-                          <td className="p-2">{record.companyName || '-'}</td>
-                          <td className="p-2">{record.designation || '-'}</td>
-                          <td className="p-2">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              record.status === 'Interested' || record.status === 'Converted'
-                                ? 'bg-green-100 text-green-800'
-                                : record.status === 'Not Interested' || record.status === 'Rejected' || record.status === 'Do Not Call'
-                                ? 'bg-red-100 text-red-800'
-                                : record.status === 'Follow Up' || record.status === 'Call Back'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : record.status
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {record.status || 'No Status'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
