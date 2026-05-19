@@ -4,9 +4,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { 
-  LayoutDashboard, 
-  Users, 
+import {
+  LayoutDashboard,
+  Users,
   UserPlus,
   UserCheck,
   BarChart3,
@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Plus,
   List,
-  PhoneCall
+  PhoneCall,
+  Headphones,
 } from 'lucide-react'
 
 interface ModernSidebarProps {
@@ -145,12 +146,22 @@ export function ModernSidebar({ onAddLead, onAddUser, onAddAdmin }: ModernSideba
             </Link>
 
             <Link href={isSuperAdmin ? "/superadmin/all-leads" : isAdmin ? "/admin/all-leads" : "/dashboard/leads"}>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all duration-200"
               >
                 <List className="mr-3 h-4 w-4" />
                 View All Leads
+              </Button>
+            </Link>
+
+            <Link href="/dashboard/ai-call-leads">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all duration-200"
+              >
+                <Headphones className="mr-3 h-4 w-4" />
+                AI Call Leads
               </Button>
             </Link>
           </div>
