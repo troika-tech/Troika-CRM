@@ -21,6 +21,7 @@ model User {
   assignedUserIds String[] @default([])
   callingData   CallingData[] @relation("DataAssignee")
   assignedCallingData CallingData[] @relation("DataAssigner")
+  callingAgentLeads CallingAgentLead[] @relation("CallingAgentLeadOwner")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -49,6 +50,46 @@ model Lead {
   @@index([followUpDate])
   @@index([customerName])
   @@index([leadType])
+}
+
+model CallingAgentLead {
+  // External lead/transfer record pushed from the Calling-Agent backend.
+  // Stored in its own collection rather than mixed into Lead to avoid
+  // schema conflicts and keep filtering simple. Idempotency comes from
+  // externalEventKey (unique) — duplicate POSTs upsert this single row.
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  externalEventKey   String   @unique
+  eventType          String   // "lead" | "transfer"
+  externalCallId     String
+  callingUserId      String?
+  agentId            String?
+  agentName          String?
+  crmUserId          String?  @db.ObjectId
+  crmUser            User?    @relation("CallingAgentLeadOwner", fields: [crmUserId], references: [id])
+  customerPhone      String
+  campaignId         String?
+  campaignName       String?
+  callDateTime       DateTime?
+  duration           Int?
+  summary            String?
+  // Stored as a JSON string for portability (Prisma Mongo Json fields
+  // require parsing on read in some setups; strings are universally safe).
+  transcriptJson     String?
+  leadQualifierJson  String?
+  leadReason         String?
+  transferStatus     String?
+  transferToNumber   String?
+  recordingStatus    String?
+  rawPayloadJson     String?  // full original payload for debugging
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([crmUserId, createdAt(sort: Desc)])
+  @@index([eventType, createdAt(sort: Desc)])
+  @@index([customerPhone])
+  @@index([externalCallId])
+  @@index([campaignId])
+  @@index([createdAt])
 }
 
 model CallingData {
