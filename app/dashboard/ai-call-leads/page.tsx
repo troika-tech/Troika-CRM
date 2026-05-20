@@ -37,8 +37,8 @@ export default function AiCallLeadsPage() {
         <ModernSidebar onAddLead={() => {}} />
         <div className="flex-1 flex flex-col ml-64">
           <Header />
-          <div className="flex-1 p-6">
-            <div className="max-w-7xl mx-auto">
+          <div className="flex-1 p-4 sm:p-6">
+            <div className="w-full">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">AI Call Leads</h1>

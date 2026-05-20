@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Search, Eye } from 'lucide-react'
@@ -197,11 +196,9 @@ export function CallingAgentLeadsTable() {
   }
 
   const detailTranscript = detailRow ? safeParse(detailRow.transcriptJson) : null
-  const detailQualifier = detailRow ? safeParse(detailRow.leadQualifierJson) : null
 
   return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
+    <div className="w-full bg-white rounded-lg border border-gray-200 shadow-sm p-4 space-y-4">
         {/* Live status pill — visual hint that realtime push is wired up */}
         <div className="flex items-center gap-2 text-xs">
           <span
@@ -284,40 +281,37 @@ export function CallingAgentLeadsTable() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm border border-gray-200 border-collapse">
             <thead className="bg-gray-50 text-gray-700">
               <tr>
-                <th className="px-3 py-2 text-left">Type</th>
-                <th className="px-3 py-2 text-left">Phone</th>
-                <th className="px-3 py-2 text-left">Campaign</th>
-                <th className="px-3 py-2 text-left">Agent</th>
-                <th className="px-3 py-2 text-left">When</th>
-                <th className="px-3 py-2 text-left">Duration</th>
-                <th className="px-3 py-2 text-left">Qualifier/Status</th>
-                <th className="px-3 py-2 text-left">Summary</th>
-                <th className="px-3 py-2 text-left">Owner</th>
-                <th className="px-3 py-2 text-left"></th>
+                <th className="px-3 py-2 text-left border border-gray-200">Type</th>
+                <th className="px-3 py-2 text-left border border-gray-200">Phone</th>
+                <th className="px-3 py-2 text-left border border-gray-200">Campaign</th>
+                <th className="px-3 py-2 text-left border border-gray-200">Date &amp; Time</th>
+                <th className="px-3 py-2 text-left border border-gray-200">Duration</th>
+                <th className="px-3 py-2 text-left border border-gray-200">Owner</th>
+                <th className="px-3 py-2 text-left border border-gray-200"></th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={10} className="px-3 py-6 text-center text-gray-500">
+                  <td colSpan={7} className="px-3 py-6 text-center text-gray-500 border border-gray-200">
                     Loading…
                   </td>
                 </tr>
               )}
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-3 py-6 text-center text-gray-500">
+                  <td colSpan={7} className="px-3 py-6 text-center text-gray-500 border border-gray-200">
                     No records found.
                   </td>
                 </tr>
               )}
               {!loading &&
                 rows.map((row) => (
-                  <tr key={row.id} className="border-t hover:bg-gray-50">
-                    <td className="px-3 py-2">
+                  <tr key={row.id} className="hover:bg-gray-50">
+                    <td className="px-3 py-2 border border-gray-200">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                           row.eventType === 'transfer'
@@ -328,25 +322,16 @@ export function CallingAgentLeadsTable() {
                         {row.eventType}
                       </span>
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs">{row.customerPhone || '—'}</td>
-                    <td className="px-3 py-2">{row.campaignName || row.campaignId || '—'}</td>
-                    <td className="px-3 py-2">{row.agentName || row.agentId || '—'}</td>
-                    <td className="px-3 py-2 text-xs text-gray-600">
+                    <td className="px-3 py-2 font-mono text-xs border border-gray-200">{row.customerPhone || '—'}</td>
+                    <td className="px-3 py-2 border border-gray-200">{row.campaignName || row.campaignId || '—'}</td>
+                    <td className="px-3 py-2 text-xs text-gray-600 border border-gray-200">
                       {formatDate(row.callDateTime || row.createdAt)}
                     </td>
-                    <td className="px-3 py-2">{formatDuration(row.duration)}</td>
-                    <td className="px-3 py-2 text-xs">
-                      {row.eventType === 'transfer'
-                        ? row.transferStatus || '—'
-                        : row.leadReason || '—'}
-                    </td>
-                    <td className="px-3 py-2 max-w-[260px] truncate text-gray-700" title={row.summary || ''}>
-                      {row.summary || '—'}
-                    </td>
-                    <td className="px-3 py-2 text-xs">
+                    <td className="px-3 py-2 border border-gray-200">{formatDuration(row.duration)}</td>
+                    <td className="px-3 py-2 text-xs border border-gray-200">
                       {row.crmUser?.email || row.crmUserId || '—'}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2 border border-gray-200">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -421,15 +406,6 @@ export function CallingAgentLeadsTable() {
                   <Field label="Recording" value={detailRow.recordingStatus} />
                 </div>
 
-                {detailQualifier !== null && (
-                  <div>
-                    <div className="text-xs font-semibold text-gray-700 mb-1">Lead Qualifier</div>
-                    <pre className="text-xs bg-gray-50 rounded p-2 overflow-x-auto">
-                      {JSON.stringify(detailQualifier, null, 2)}
-                    </pre>
-                  </div>
-                )}
-
                 {detailRow.summary && (
                   <div>
                     <div className="text-xs font-semibold text-gray-700 mb-1">Summary</div>
@@ -456,8 +432,7 @@ export function CallingAgentLeadsTable() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   )
 }
 
