@@ -80,6 +80,14 @@ model CallingAgentLead {
   transferStatus     String?
   transferToNumber   String?
   recordingStatus    String?
+  // ── Callback-specific (eventType == "callback") ────────────────
+  // scheduledFor: the future time the caller asked us to call back.
+  // Distinct from callDateTime which is the time of the original call
+  // during which the request was made.
+  scheduledFor       DateTime?
+  scheduledCallId    String?
+  callbackReason     String?
+  callbackTimezone   String?
   rawPayloadJson     String?  // full original payload for debugging
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

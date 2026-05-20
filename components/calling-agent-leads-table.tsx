@@ -64,7 +64,7 @@ export function CallingAgentLeadsTable() {
   const [rows, setRows] = useState<CallingAgentLead[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [eventType, setEventType] = useState<'' | 'lead' | 'transfer'>('')
+  const [eventType, setEventType] = useState<'' | 'lead' | 'transfer' | 'callback'>('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [agentId, setAgentId] = useState('')
@@ -242,6 +242,7 @@ export function CallingAgentLeadsTable() {
               <option value="">All</option>
               <option value="lead">Lead</option>
               <option value="transfer">Transfer</option>
+              <option value="callback">Callback</option>
             </select>
           </div>
           <div>
@@ -316,7 +317,9 @@ export function CallingAgentLeadsTable() {
                         className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                           row.eventType === 'transfer'
                             ? 'bg-amber-100 text-amber-800'
-                            : 'bg-blue-100 text-blue-800'
+                            : row.eventType === 'callback'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'
                         }`}
                       >
                         {row.eventType}

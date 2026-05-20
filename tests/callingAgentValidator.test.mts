@@ -143,3 +143,29 @@ test('unknown eventType rejected', () => {
   })
   assert.equal(r.success, false)
 })
+
+test('callback event is accepted with email + call id + phone', () => {
+  const r = callingAgentEventSchema.safeParse({
+    externalEventKey: 'troika_crm:c1:callback:s1',
+    eventType: 'callback',
+    crmUserEmail: 'owner@example.com',
+    externalCallId: 'c1',
+    customerPhone: '+919876543210',
+    scheduledFor: '2026-05-19T09:30:00.000Z',
+    scheduledCallId: 's1',
+    callbackReason: 'pricing discussion',
+    callbackTimezone: 'Asia/Kolkata',
+  })
+  assert.equal(r.success, true)
+})
+
+test('callback event rejected without owner identifier (same as lead/transfer)', () => {
+  // Callback shares the contract rule: must carry crmUserEmail or legacy id.
+  const r = callingAgentEventSchema.safeParse({
+    externalEventKey: 'troika_crm:c1:callback:s1',
+    eventType: 'callback',
+    externalCallId: 'c1',
+    customerPhone: '+91',
+  })
+  assert.equal(r.success, false)
+})

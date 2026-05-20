@@ -252,6 +252,12 @@ export async function POST(request: NextRequest) {
     transferStatus: event.transferStatus || null,
     transferToNumber: event.transferToNumber || null,
     recordingStatus: event.recordingStatus || null,
+    // Callback fields — null for non-callback events; persisted typed so
+    // the UI can sort/filter by scheduledFor without parsing rawPayloadJson.
+    scheduledFor: parseDateTime(event.scheduledFor),
+    scheduledCallId: event.scheduledCallId || null,
+    callbackReason: event.callbackReason || null,
+    callbackTimezone: event.callbackTimezone || null,
     rawPayloadJson: safeStringify(event),
   }
 
@@ -280,6 +286,10 @@ export async function POST(request: NextRequest) {
         transferStatus: data.transferStatus ?? undefined,
         transferToNumber: data.transferToNumber ?? undefined,
         recordingStatus: data.recordingStatus ?? undefined,
+        scheduledFor: data.scheduledFor ?? undefined,
+        scheduledCallId: data.scheduledCallId ?? undefined,
+        callbackReason: data.callbackReason ?? undefined,
+        callbackTimezone: data.callbackTimezone ?? undefined,
         rawPayloadJson: data.rawPayloadJson ?? undefined,
       },
       create: {

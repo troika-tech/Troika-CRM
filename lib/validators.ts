@@ -43,7 +43,7 @@ export const leadSchema = z.object({
 export const callingAgentEventSchema = z
   .object({
     externalEventKey: z.string().min(3).max(200),
-    eventType: z.enum(['lead', 'transfer', 'ping']),
+    eventType: z.enum(['lead', 'transfer', 'callback', 'ping']),
     externalCallId: z.string().optional().nullable(),
     callingUserId: z.string().optional().nullable(),
     agentId: z.string().optional().nullable(),
@@ -64,6 +64,13 @@ export const callingAgentEventSchema = z
     recordingStatus: z.string().optional().nullable(),
     rawCallStatus: z.string().optional().nullable(),
     rawCallOutcome: z.string().optional().nullable(),
+    // Callback-specific fields (eventType === 'callback'). All optional;
+    // missing values are tolerated so future schema additions don't break
+    // older Calling-Agent backends still on the v1 payload shape.
+    scheduledFor: z.string().optional().nullable(),
+    scheduledCallId: z.string().optional().nullable(),
+    callbackReason: z.string().optional().nullable(),
+    callbackTimezone: z.string().optional().nullable(),
     ping: z.boolean().optional(),
   })
   .passthrough()

@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
     // 8. $sort by the requested field for final display order.
     // 9. $facet: items (skip/limit) + total (count) in one round-trip.
     const postDedupMatch: Record<string, any> = {}
-    if (eventType === 'lead' || eventType === 'transfer') {
+    if (eventType === 'lead' || eventType === 'transfer' || eventType === 'callback') {
       postDedupMatch.eventType = eventType
     }
 
@@ -194,7 +194,21 @@ export async function GET(request: NextRequest) {
             },
           },
           sortTs: { $ifNull: ['$callDateTime', '$createdAt'] },
-          transferRank: { $cond: [{ $eq: ['$eventType', 'transfer'] }, 0, 1] },
+          // Per-phone winner priority: transfer (0) > lead (1) > callback (2)
+          // > anything unknown (3). After $sort by (group, eventRank, sortTs
+          // desc) the $group's $first picks transfer if any exists for the
+          // phone, else lead, else callback. Replaces the prior binary
+          // transferRank that lumped lead and callback together.
+          eventRank: {
+            $switch: {
+              branches: [
+                { case: { $eq: ['$eventType', 'transfer'] }, then: 0 },
+                { case: { $eq: ['$eventType', 'lead'] }, then: 1 },
+                { case: { $eq: ['$eventType', 'callback'] }, then: 2 },
+              ],
+              default: 3,
+            },
+          },
         },
       },
       {
@@ -269,7 +283,7 @@ export async function GET(request: NextRequest) {
             },
           ]
         : []),
-      { $sort: { _groupKey: 1, transferRank: 1, sortTs: -1 } },
+      { $sort: { _groupKey: 1, eventRank: 1, sortTs: -1 } },
       {
         $group: {
           _id: '$_groupKey',
@@ -288,7 +302,11 @@ export async function GET(request: NextRequest) {
               $project: {
                 _digits: 0,
                 sortTs: 0,
-                transferRank: 0,
+                // Strip the pipeline-internal rank field. Renamed from
+                // transferRank → eventRank when the third tier (callback)
+                // was added; the projection must follow that rename or
+                // the field leaks into API responses.
+                eventRank: 0,
                 normalizedPhone: 0,
                 _groupKey: 0,
               },
